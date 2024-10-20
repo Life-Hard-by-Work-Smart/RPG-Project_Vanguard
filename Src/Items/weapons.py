@@ -11,6 +11,10 @@ class weapon(Item):
         self.health_modifier = damage_modifier
         self.drop_chance = drop_chance 
 
+
+
+#objekty
+
 # Slime Plains
 slime_weapons = []
 

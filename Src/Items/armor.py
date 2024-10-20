@@ -20,7 +20,10 @@ class Chestplate(Armor):
     
 class Leggear(Armor):
     equipement_type = LEGGEAR
-    
+
+
+
+# objekty
 
 # Slime Plains
 slime_armors = []
