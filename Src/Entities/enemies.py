@@ -1,7 +1,18 @@
-from common_entities import *
 
-class Enemy(Entity):
-    ...
+
+class Enemy:
+    
+    def update_stats(self):
+        self.max_hp = health_lvl * 10
+        self.current_hp = max_hp
+        self.healing_amount = healing_lvl*healing_lvl
+        self.damage_per_hit = damage_lvl * 3
+
+    def __init__(self):
+        
+        
+        self.update_stats()
+            
 
 class Slime(Enemy):
     name = "Slime"
