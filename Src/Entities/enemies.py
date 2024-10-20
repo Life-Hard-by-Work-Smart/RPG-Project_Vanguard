@@ -1,6 +1,9 @@
 from common_entities import *
 
 class Enemy(Entity):
+    ...
+
+class Slime(Enemy):
     name = "Slime"
     health_lvl = 1
     healing_lvl = 1
@@ -8,7 +11,7 @@ class Enemy(Entity):
     lvl = 1
     exp = 50
 
-class Enemy(Entity):
+class Golem(Enemy):
     name = "Golem"
     health_lvl = 6
     healing_lvl = 0
@@ -16,7 +19,7 @@ class Enemy(Entity):
     lvl = 6
     exp = 500
 
-class Enemy(Entity):
+class Wyvern(Enemy):
     name = "Wyvern"
     health_lvl = 5
     healing_lvl = 6
@@ -24,7 +27,7 @@ class Enemy(Entity):
     lvl = 16
     exp = 2000
 
-class Enemy(Entity):
+class Dragon(Enemy):
     name = "Dragon"
     health_lvl = 20
     healing_lvl = 5
