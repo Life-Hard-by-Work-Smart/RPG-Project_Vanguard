@@ -1,14 +1,33 @@
 from common_entities import *
 
 class Enemy(Entity):
-    ...
+    name = "Slime"
+    health_lvl = 1
+    healing_lvl = 1
+    damage_lvl = 1
+    lvl = 1
+    exp = 50
 
+class Enemy(Entity):
+    name = "Golem"
+    health_lvl = 6
+    healing_lvl = 0
+    damage_lvl = 2
+    lvl = 6
+    exp = 500
 
+class Enemy(Entity):
+    name = "Wyvern"
+    health_lvl = 5
+    healing_lvl = 6
+    damage_lvl = 7
+    lvl = 16
+    exp = 2000
 
-slime_enemy = Enemy("Slime", 1, 1, 1, 1, 50)
-
-golem_enemy = Enemy("Golem", 6, 0, 2, 6, 500)
-
-wyvern_enemy = Enemy("Wyvern", 5, 6, 7, 16, 2000)
-
-dragon_enemy = Enemy("Dragon", 20, 5, 10, 35, 10000)
+class Enemy(Entity):
+    name = "Dragon"
+    health_lvl = 20
+    healing_lvl = 5
+    damage_lvl = 10
+    lvl = 35
+    exp = 100000
