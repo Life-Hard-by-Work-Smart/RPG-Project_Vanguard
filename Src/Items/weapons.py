@@ -1,4 +1,4 @@
-from common_items import * 
+from src.items.common_items import * 
 
 # třídy
 

@@ -1,3 +1,3 @@
-from armor import *
-from common_items import *
-from weapons import *
+__all__ = ["armor",
+           "common_items",
+           "weapons"]

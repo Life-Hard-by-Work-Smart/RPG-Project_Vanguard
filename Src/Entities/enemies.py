@@ -1,5 +1,3 @@
-
-
 class Enemy:
     
     def update_stats(self):

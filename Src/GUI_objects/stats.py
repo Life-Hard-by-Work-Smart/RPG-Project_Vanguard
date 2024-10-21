@@ -1,1 +1,1 @@
-from common_GUI_elements import *
+from src.gui_objects.common_gui_elements import *

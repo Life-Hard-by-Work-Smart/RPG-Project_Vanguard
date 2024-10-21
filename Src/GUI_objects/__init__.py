@@ -1,9 +1,9 @@
-from chest import *
-from combat import *
-from common_GUI_elements import *
-from inventory import *
-from main_screen import *
-from name_select import *
-from settings import *
-from skill_tree import *
-from stats import *
+__all__ = ["chest",
+           "combat",
+           "common_gui_elements",
+           "inventory",
+           "main_screen",
+           "name_select",
+           "settings",
+           "skill_tree",
+           "stats"]

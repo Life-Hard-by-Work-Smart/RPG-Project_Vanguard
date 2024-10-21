@@ -1,4 +1,3 @@
-
 class Player():
 
     def update_stats(self, equipement_slots):

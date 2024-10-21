@@ -1,4 +1,4 @@
-from common_items import * 
+from .common_items import * 
 
 # třídy
 
@@ -41,12 +41,12 @@ golem_armors = [golem_headgear_1, golem_headgear_2, golem_chestplate_1, golem_ch
 
 # Wyvern Mountains
 
-wyvern_headgear_1 = Headgear("Gooey Leggings", 0, 15, 0.3)
-wyvern_headgear_2 = Headgear("Gooey Leggings", 0, 0.06)
-wyvern_chestplate_1 = Chestplate("Gooey Leggings", 0, 30, 0.3)
-wyvern_chestplate_2 = Chestplate("Gooey Leggings", 0, 0.06)
-wyvern_leggear_1 = Leggear("Gooey Leggings", 0, 15, 0.3)
-wyvern_leggear_2 = Leggear("Gooey Leggings", 0, 20, 0.06)
+wyvern_headgear_1 = Headgear("Scale Helmet", 0, 15, 0.3)
+wyvern_headgear_2 = Headgear("Bacta Helmet", 0, 20, 0.06)
+wyvern_chestplate_1 = Chestplate("Scale Chestplate", 0, 30, 0.3)
+wyvern_chestplate_2 = Chestplate("Bacta Chestplate", 0, 40, 0.06)
+wyvern_leggear_1 = Leggear("Scale Leggings", 0, 15, 0.3)
+wyvern_leggear_2 = Leggear("Bacta Leggings", 0, 20, 0.06)
 
 wyvern_armors = [wyvern_headgear_1, wyvern_headgear_2, wyvern_chestplate_1, wyvern_chestplate_2, wyvern_leggear_1, wyvern_leggear_2]
 
@@ -62,4 +62,4 @@ Dragon_armors = [dragon_headgear, dragon_chestplate, wyvern_leggear]
 
 ## tbd:
 ## vytvořit konstantní instance různých armorů
-## přidat je do arrays podle toho z koho padaj
+## přidat je do arrays podle toho z koho padaj 
