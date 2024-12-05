@@ -60,10 +60,13 @@ class portal_rect(pygame.Rect):
 
 portal_distance_y = 64
 slime_plains_portal = pygame.Rect(1270, portal_distance_y, 10, 100)
+camp_interactable_hitboxes.append(slime_plains_portal)
 golem_ruins_portal = pygame.Rect(1270, 2*portal_distance_y + 100, 10, 100)
+camp_interactable_hitboxes.append(golem_ruins_portal)
 wivern_mountains_portal =pygame.Rect(1270, 3*portal_distance_y + 2*100, 10, 100)
+camp_interactable_hitboxes.append(wivern_mountains_portal)
 dragons_lair_portal =pygame.Rect(1270, 4* portal_distance_y + 3*100, 10, 100)
-
+camp_interactable_hitboxes.append(dragons_lair_portal)
 
 
 # slime plains
@@ -135,6 +138,7 @@ def colision_detection(player_hitbox: pygame.Rect, stationary_hitboxes: list, ol
         final_x, final_y = player_hitbox.x, player_hitbox.y
     return (final_x, final_y)
 
+
 def move(movement_keys, player, screen, stationary_hitboxes, player_speed, delta_time):
     tempy = player.y
     tempx = player.x
@@ -156,6 +160,8 @@ def move(movement_keys, player, screen, stationary_hitboxes, player_speed, delta
     coords_after_colisions = colision_detection(player, stationary_hitboxes, tempx, tempy)
     player.x = coords_after_colisions[0]
     player.y = coords_after_colisions[1]
+
+
 
 
 
@@ -218,7 +224,7 @@ while running:
     
 
 
-    
+
     update_screen()
 
 pygame.quit()
