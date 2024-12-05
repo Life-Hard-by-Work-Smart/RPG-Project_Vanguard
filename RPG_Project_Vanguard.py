@@ -1,4 +1,6 @@
 import pygame
+import os
+
 
 # pygame setup
 pygame.init()
@@ -12,12 +14,23 @@ current_screen = "camp"
 previous_screen  = None
 
 
+# asset loading
+dirname = os.path.dirname(__file__)
+
+camp_background_dir = os.path.join(dirname, fr'Assets\pics\Mapa_RPG-P.V._v1.0.0.png')
+camp_background = pygame.Surface.convert(pygame.image.load(camp_background_dir))
+
+player_image_dir = os.path.join(dirname, fr'Assets\pics\tucnak_warm.png')
+player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
+
+
+
+
 ## vars and constants for menu
 
-buttons = []
+buttons = {}
 
-button_back_to_game = pygame.Rect(540, 310, 100, 50)
-buttons.append(button_back_to_game)
+buttons["back to game"] = pygame.Rect(540, 310, 100, 50)
 
 
 
@@ -28,17 +41,30 @@ buttons.append(button_back_to_game)
 map_border = pygame.Rect(5, 5, 1270, 710)
 
 # camp
-camp_background = pygame.Surface.convert(pygame.image.load(
-    fr"C:\Users\matbx\OneDrive\Dokumenty\Coding\Python\1.University\projekty\pygame_experiments\Mapa_RPG-P.V._v1.0.0.png"
-    ))
-
-camp_stationary_hitboxes = []
+camp_wall_hitboxes = []
 
 wall_1 = pygame.Rect(200, 260, 30, 200)
-camp_stationary_hitboxes.append(wall_1)
+camp_wall_hitboxes.append(wall_1)
 
 wall_2 = pygame.Rect(200, 260, 200, 30)
-camp_stationary_hitboxes.append(wall_2)
+camp_wall_hitboxes.append(wall_2)
+
+
+camp_interactable_hitboxes = []
+
+class portal_rect(pygame.Rect):
+    
+    def __init__(self):
+        self.width = 10
+        self.height = 100
+
+portal_distance_y = 64
+slime_plains_portal = pygame.Rect(1270, portal_distance_y, 10, 100)
+golem_ruins_portal = pygame.Rect(1270, 2*portal_distance_y + 100, 10, 100)
+wivern_mountains_portal =pygame.Rect(1270, 3*portal_distance_y + 2*100, 10, 100)
+dragons_lair_portal =pygame.Rect(1270, 4* portal_distance_y + 3*100, 10, 100)
+
+
 
 # slime plains
 
@@ -57,17 +83,21 @@ camp_stationary_hitboxes.append(wall_2)
 ## player
 BASE_PLAYER_SPEED = 200
 
-player_image = pygame.Surface.convert(pygame.image.load(
-    fr"C:\Users\matbx\OneDrive\Dokumenty\Coding\Python\1.University\projekty\pygame_experiments\tucnak_warm.png"
-    ))
-
 player_hitbox = pygame.Rect(screen.get_width()/2, screen.get_height()/2, player_image.get_width(), player_image.get_height())
 player_hitbox_perdiction = player_hitbox.copy()
-print(player_hitbox.x)
-print(player_hitbox.width)
 
 
 # custom functions
+def quit_game():
+    global running
+    running = False
+
+def update_screen():
+    global delta_time, clock
+    pygame.display.flip()
+    delta_time = clock.tick(60) / 1000
+
+
 def speed_normalization(movement_keys, player_speed, delta_time):
     number_of_pressed_keys = 0
     speed_normalizer = 1
@@ -76,7 +106,7 @@ def speed_normalization(movement_keys, player_speed, delta_time):
         if key == True : number_of_pressed_keys += 1
 
         if number_of_pressed_keys > 1:
-            speed_normalizer = 2**(1/2)
+            speed_normalizer = 1.4;
             break
 
     distance_coefitient = player_speed * delta_time / speed_normalizer
@@ -105,21 +135,23 @@ def colision_detection(player_hitbox: pygame.Rect, stationary_hitboxes: list, ol
         final_x, final_y = player_hitbox.x, player_hitbox.y
     return (final_x, final_y)
 
-def move(movement_keys, distance_coefitient, player, stationary_hitboxes):
+def move(movement_keys, player, screen, stationary_hitboxes, player_speed, delta_time):
     tempy = player.y
     tempx = player.x
 
+    distance_coefitient = speed_normalization(movement_keys, player_speed, delta_time)
+
     if movement_keys[0]:
-        player.y = pygame.math.clamp(player.y - round(distance_coefitient), 0, screen.get_height() - player_image.get_height())
+        player.y = pygame.math.clamp(player.y - round(distance_coefitient), 0, screen.get_height() - player.height)
 
     if movement_keys[1]:
-        player.y = pygame.math.clamp(player.y + round(distance_coefitient), 0, screen.get_height() - player_image.get_height())
+        player.y = pygame.math.clamp(player.y + round(distance_coefitient), 0, screen.get_height() - player.height)
 
     if movement_keys[2]:
-        player.x = pygame.math.clamp(player.x - round(distance_coefitient), 0, screen.get_width() - player_image.get_width())
+        player.x = pygame.math.clamp(player.x - round(distance_coefitient), 0, screen.get_width() - player.width)
 
     if movement_keys[3]:
-        player.x = pygame.math.clamp(player.x + round(distance_coefitient), 0, screen.get_width() - player_image.get_width())
+        player.x = pygame.math.clamp(player.x + round(distance_coefitient), 0, screen.get_width() - player.width)
 
     coords_after_colisions = colision_detection(player, stationary_hitboxes, tempx, tempy)
     player.x = coords_after_colisions[0]
@@ -145,47 +177,48 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            quit_game()
 
 
     if current_screen == "menu":
+        movement = False
         screen.fill("black")
-        pygame.draw.rect(screen, "white", buttons[0])
-        for button in buttons:
+        for button in buttons.values():
+            pygame.draw.rect(screen, "white", button)
+        for name, button in buttons.items():
             if pygame.mouse.get_pressed()[0] and (button.left < pygame.mouse.get_pos()[0] < (button.left + button.width)) and (button.top < pygame.mouse.get_pos()[1] < (button.top + button.height)):
-                previous_screen = current_screen
-                current_screen = "camp"
+                if name == "back to game":
+                    previous_screen = current_screen
+                    current_screen = "camp"
         
         
 
     if current_screen == "camp":
+        movement = True
         screen.blit(camp_background, (0, 0))
-        for i_stationary_hitbox in range(len(camp_stationary_hitboxes)):
-            pygame.draw.rect(screen, "black", camp_stationary_hitboxes[i_stationary_hitbox])
+        for i_stationary_hitbox in range(len(camp_wall_hitboxes)):
+            pygame.draw.rect(screen, "black", camp_wall_hitboxes[i_stationary_hitbox])
+
+        for i_interactable_hitbox in range(len(camp_interactable_hitboxes)):
+            pygame.draw.rect(screen, "red", camp_interactable_hitboxes[i_interactable_hitbox])
     
-        movement_keys = [keys_pressed[pygame.K_w], keys_pressed[pygame.K_s], keys_pressed[pygame.K_a], keys_pressed[pygame.K_d]]
-
-        distance_coefitient = speed_normalization(movement_keys, BASE_PLAYER_SPEED, delta_time)
-
-        move(movement_keys, distance_coefitient, player_hitbox, camp_stationary_hitboxes)
-
-        screen.blit(player_image, player_hitbox)
 
     if current_screen == "slime plains":
-        
-        screen.blit(camp_background, (0, 0))
-        pygame.draw.rect(screen, "black", camp_stationary_hitboxes[1])
-    
+        movement = True
+        #screen.blit(camp_background, (0, 0))
+        #pygame.draw.rect(screen, "black", camp_wall_hitboxes[1])
+
+
+    if movement:
         movement_keys = [keys_pressed[pygame.K_w], keys_pressed[pygame.K_s], keys_pressed[pygame.K_a], keys_pressed[pygame.K_d]]
 
-        distance_coefitient = speed_normalization(movement_keys, BASE_PLAYER_SPEED, delta_time)
-
-        move(movement_keys, distance_coefitient, player_hitbox, camp_stationary_hitboxes)
+        move(movement_keys, player_hitbox, screen, camp_wall_hitboxes, BASE_PLAYER_SPEED, delta_time)
 
         screen.blit(player_image, player_hitbox)
+    
 
-    pygame.display.flip()
-    # dt is delta time in seconds since last frame, used for framerate-independent physics.
-    delta_time = clock.tick(60) / 1000
+
+    
+    update_screen()
 
 pygame.quit()
