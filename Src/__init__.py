@@ -2,7 +2,7 @@
 
 
 
-"""
+
 __all__ = ["enemies",
            "player",
            "chest",
@@ -17,4 +17,3 @@ __all__ = ["enemies",
            "armor",
            "common_items",
            "weapons"]
-"""

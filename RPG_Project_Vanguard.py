@@ -1,7 +1,6 @@
 import pygame
 import os
-
-
+from src import items
 # pygame setup
 pygame.init()
 
@@ -35,8 +34,6 @@ buttons["back to game"] = pygame.Rect(540, 310, 100, 50)
 
 
 
-
-
 # vars and constants for movement screen
 ## maps
 map_border = pygame.Rect(5, 5, 1270, 710)
@@ -53,19 +50,11 @@ camp_wall_hitboxes.append(wall_2)
 
 camp_interactable_hitboxes = {}
 
-class portal_rect(pygame.Rect):
-    
-    def __init__(self, left, top):
-        self.left = left
-        self.top = top
-        self.width = 10
-        self.height = 100
-
 PORTAL_DISPLACEMENT_Y = 64
-camp_interactable_hitboxes["slime_plains_portal"] = portal_rect(1270, PORTAL_DISPLACEMENT_Y)
-camp_interactable_hitboxes["golem_ruins_portal"] = portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
-camp_interactable_hitboxes["wivern_mountains_portal"] = portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
-camp_interactable_hitboxes["dragons_lair_portal"] = portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wivern_mountains_portal"].height)
+camp_interactable_hitboxes["slime_plains_portal"] = map_objects.map_objects.portal_rect(1270, PORTAL_DISPLACEMENT_Y)
+camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.map_objects.portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
+camp_interactable_hitboxes["wivern_mountains_portal"] = map_objects.map_objects.portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
+camp_interactable_hitboxes["dragons_lair_portal"] = map_objects.map_objects.portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wivern_mountains_portal"].height)
 
 
 
@@ -102,20 +91,6 @@ def update_screen():
     global delta_time, clock
     pygame.display.flip()
     delta_time = clock.tick(60) / 1000
-
-def speed_normalization(movement_keys, player_speed, delta_time):
-    number_of_pressed_keys = 0
-    speed_normalizer = 1
-
-    for key in movement_keys:
-        if key == True: number_of_pressed_keys += 1
-        if number_of_pressed_keys > 1:
-            speed_normalizer = 1.41421
-            break
-
-    distance_coefitient = player_speed * delta_time / speed_normalizer
-    return distance_coefitient
-
 
 
 ## colision handling system
@@ -176,6 +151,20 @@ def colision_management(player_hitbox: pygame.Rect, old_x: int, old_y: int, temp
     return (final_x, final_y, dict_colisions[2])
 
 
+
+def speed_normalization(movement_keys, player_speed, delta_time):
+    number_of_pressed_keys = 0
+    speed_normalizer = 1
+
+    for key in movement_keys:
+        if key == True: number_of_pressed_keys += 1
+        if number_of_pressed_keys > 1:
+            speed_normalizer = 1.41421
+            break
+
+    distance_coefitient = player_speed * delta_time / speed_normalizer
+    return distance_coefitient
+
 def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_speed, delta_time):
     movement_keys = [keys_pressed[pygame.K_w], keys_pressed[pygame.K_s], keys_pressed[pygame.K_a], keys_pressed[pygame.K_d]]
     old_x = player.x
@@ -198,8 +187,10 @@ def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_spee
         tempx = pygame.math.clamp(tempx + distance_coefitient, 0, screen.get_width() - player.width)
 
 
-    player_coords = colision_management(player, old_x, old_y, round(tempx), round(tempy), stationary_hitboxes, interactable_hitboxes)
-    player_hitbox.x, player_hitbox.y = player_coords[0], player_coords[1]
+    new_coords_and_colision = colision_management(player, old_x, old_y, round(tempx), round(tempy), stationary_hitboxes, interactable_hitboxes)
+    player_hitbox.x, player_hitbox.y = new_coords_and_colision[0], new_coords_and_colision[1]
+    
+    #interact(new_coords_and_colision[2])
 
 # variables for game navigation
 current_screen = "camp"
