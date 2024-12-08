@@ -1,6 +1,10 @@
 import pygame
 import os
-from src import items
+import entities
+import gui_objects
+import items
+import map_objects
+
 # pygame setup
 pygame.init()
 
@@ -18,7 +22,7 @@ camp_background_dir = os.path.join(dirname, fr"Assets\pics\Mapa_RPG-P.V._v1.0.0.
 camp_background = pygame.Surface.convert(pygame.image.load(camp_background_dir))
 
 slime_plains_background_dir = os.path.join(dirname, fr"Assets\pics\slimeplains.png")
-slime_plaind_background = pygame.Surface.convert(pygame.image.load(slime_plains_background_dir))
+slime_plains_background = pygame.Surface.convert(pygame.image.load(slime_plains_background_dir))
 
 player_image_dir = os.path.join(dirname, fr"Assets\pics\tucnak_warm.png")
 player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
@@ -31,6 +35,8 @@ player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
 buttons = {}
 
 buttons["back to game"] = pygame.Rect(540, 310, 100, 50)
+
+
 
 
 
@@ -51,33 +57,43 @@ camp_wall_hitboxes.append(wall_2)
 camp_interactable_hitboxes = {}
 
 PORTAL_DISPLACEMENT_Y = 64
-camp_interactable_hitboxes["slime_plains_portal"] = map_objects.map_objects.portal_rect(1270, PORTAL_DISPLACEMENT_Y)
-camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.map_objects.portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
-camp_interactable_hitboxes["wivern_mountains_portal"] = map_objects.map_objects.portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
-camp_interactable_hitboxes["dragons_lair_portal"] = map_objects.map_objects.portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wivern_mountains_portal"].height)
-
-
+camp_interactable_hitboxes["slime_plains_portal"] = map_objects.portal_rect(1270, PORTAL_DISPLACEMENT_Y)
+camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
+camp_interactable_hitboxes["wivern_mountains_portal"] = map_objects.portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
+camp_interactable_hitboxes["dragons_lair_portal"] = map_objects.portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wivern_mountains_portal"].height)
 
 
 
 ## slime plains
 
+slime_wall_hitboxes = []
+
+slime_interacrtable_hitboxes = {}
 
 ## golem ruins
 
+golem_wall_hitboxes = []
 
-## wivern montains
+golem_interacrtable_hitboxes = {}
 
+## wyvern montains
+
+wyvern_wall_hitboxes = []
+
+wyvern_interacrtable_hitboxes = {}
 
 ## dragon's lair
 
+dragon_wall_hitboxes = []
 
+dragon_interacrtable_hitboxes = {}
 
 
 # player
-BASE_PLAYER_SPEED = 200
+BASE_PLAYER_SPEED = 300
 
 player_hitbox = pygame.Rect(screen.get_width()/2, screen.get_height()/2, player_image.get_width(), player_image.get_height())
+print(player_image.get_height())
 player_hitbox_perdiction = player_hitbox.copy()
 
 
@@ -90,7 +106,13 @@ def quit_game():
 def update_screen():
     global delta_time, clock
     pygame.display.flip()
-    delta_time = clock.tick(60) / 1000
+    delta_time = clock.tick(144) / 1000
+
+def interact(with_what, player_hitbox):
+    global current_screen
+    if with_what == "slime_plains_portal":
+        current_screen = "slime"
+        player_hitbox.x, player_hitbox.y = 50, 330
 
 
 ## colision handling system
@@ -121,7 +143,7 @@ def dict_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, interac
         colision = colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, object)
         if colision[0] == True: colisions[0] = True
         if colision[1] == True: colisions[1] = True
-        if colisions[0] or colisions[1] == True:
+        if (colisions[0] or colisions[1]) and colided_with == None:
             colided_with = name
     
     return [colisions[0], colisions[1], colided_with]
@@ -190,7 +212,7 @@ def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_spee
     new_coords_and_colision = colision_management(player, old_x, old_y, round(tempx), round(tempy), stationary_hitboxes, interactable_hitboxes)
     player_hitbox.x, player_hitbox.y = new_coords_and_colision[0], new_coords_and_colision[1]
     
-    #interact(new_coords_and_colision[2])
+    interact(new_coords_and_colision[2], player)
 
 # variables for game navigation
 current_screen = "camp"
@@ -242,15 +264,42 @@ while running:
             pygame.draw.rect(screen, "red", interactable_hitbox)
 
         move(player_hitbox, screen, camp_wall_hitboxes, camp_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+        print(current_screen)
         screen.blit(player_image, player_hitbox)
 
-    if current_screen == "slime plains":
-        screen.blit(slime_plaind_background, (0, 0))
+    if current_screen == "slime":
+        screen.blit(slime_plains_background, (0, 0))
 
-        #move(player_hitbox, screen, camp_wall_hitboxes, BASE_PLAYER_SPEED, delta_time)
+        move(player_hitbox, screen, slime_wall_hitboxes, slime_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
         screen.blit(player_image, player_hitbox)
 
+    if current_screen == "golem":
+        #screen.blit(golem_plains_background, (0, 0))
+
+        move(player_hitbox, screen, golem_wall_hitboxes, golem_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+        screen.blit(player_image, player_hitbox)
+
+    if current_screen == "wyvern":
+        #screen.blit(wyvern_plains_background, (0, 0))
+
+        move(player_hitbox, screen, wyvern_wall_hitboxes, wyvern_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+        screen.blit(player_image, player_hitbox)
+    
+    if current_screen == "dragon":
+        #screen.blit(dragon_plains_background, (0, 0))
+
+        move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+        screen.blit(player_image, player_hitbox)
 
     update_screen()
 
 pygame.quit()
+
+
+
+# To Do List:
+# zbytek lokací
+# inventory screen
+# combat screen
+# loot screen
+# skill screen
