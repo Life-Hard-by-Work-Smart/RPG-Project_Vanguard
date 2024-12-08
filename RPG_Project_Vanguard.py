@@ -108,40 +108,76 @@ def speed_normalization(movement_keys, player_speed, delta_time):
     speed_normalizer = 1
 
     for key in movement_keys:
-        if key == True : number_of_pressed_keys += 1
-
+        if key == True: number_of_pressed_keys += 1
         if number_of_pressed_keys > 1:
-            speed_normalizer = 1.4;
+            speed_normalizer = 1.41421
             break
 
     distance_coefitient = player_speed * delta_time / speed_normalizer
     return distance_coefitient
 
 
-def colision_detection(player_hitbox: pygame.Rect, stationary_hitboxes: list, old_x: int, old_y: int, tempx, tempy):
-    disable_x, disable_y = False, False
-    for wall in stationary_hitboxes:
 
-        if  tempx <= wall.x + wall.width and tempx + player_hitbox.width >= wall.x and old_y <= wall.y + wall.height and old_y + player_hitbox.height >= wall.y:
-            disable_x = True
-        if  old_x <= wall.x + wall.width and old_x + player_hitbox.width >= wall.x and tempy <= wall.y + wall.height and tempy + player_hitbox.height >= wall.y:
-            disable_y = True
+## colision handling system
+
+
+def colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, wall):
+    colision_x = False
+    colision_y = False
+    if  temp_x <= wall.x + wall.width and temp_x + player_hitbox.width >= wall.x and old_y <= wall.y + wall.height and old_y + player_hitbox.height >= wall.y:
+        colision_x = True
+    if  old_x <= wall.x + wall.width and old_x + player_hitbox.width >= wall.x and temp_y <= wall.y + wall.height and temp_y + player_hitbox.height >= wall.y:
+        colision_y = True
+    return [colision_x, colision_y]
+
+def list_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, stationary_hitboxes):
+    colisions = [False, False]
+    for object in stationary_hitboxes:
+        colision = colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, object)
+        if colision[0] == True: colisions[0] = True
+        if colision[1] == True: colisions[1] = True
+
+    return colisions
+
+def dict_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, interactable_hitboxes):
+    colisions = [False, False]
+    colided_with = None
+    for name, object in interactable_hitboxes.items():
+        colision = colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, object)
+        if colision[0] == True: colisions[0] = True
+        if colision[1] == True: colisions[1] = True
+        if colisions[0] or colisions[1] == True:
+            colided_with = name
+    
+    return [colisions[0], colisions[1], colided_with]
+
+def colision_management(player_hitbox: pygame.Rect, old_x: int, old_y: int, temp_x: int, temp_y: int, stationary_hitboxes: list, interactable_hitboxes: dict,):
+    disable_x, disable_y = False, False
+
+    list_colisions = list_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, stationary_hitboxes)
+    dict_colisions = dict_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, interactable_hitboxes)
+
+    if list_colisions[0] == True or dict_colisions[0]: disable_x = True
+    if list_colisions[1] == True or dict_colisions[1]: disable_y = True
+
 
     if disable_x and disable_y:
         print("2way colision")
         final_x, final_y = old_x, old_y
     elif disable_x and not disable_y:
-        final_x, final_y = old_x, tempy
+        final_x, final_y = old_x, temp_y
         print("x would cause colision")
     elif not disable_x and disable_y:
-        final_x, final_y = tempx, old_y
+        final_x, final_y = temp_x, old_y
         print("y would cause colision")
     else:
-        final_x, final_y = tempx, tempy
-    return (final_x, final_y)
+        final_x, final_y = temp_x, temp_y
+
+    return (final_x, final_y, dict_colisions[2])
 
 
-def move(movement_keys, player, screen, stationary_hitboxes, player_speed, delta_time):
+def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_speed, delta_time):
+    movement_keys = [keys_pressed[pygame.K_w], keys_pressed[pygame.K_s], keys_pressed[pygame.K_a], keys_pressed[pygame.K_d]]
     old_x = player.x
     old_y = player.y
     tempx = player.x
@@ -150,21 +186,20 @@ def move(movement_keys, player, screen, stationary_hitboxes, player_speed, delta
     distance_coefitient = speed_normalization(movement_keys, player_speed, delta_time)
 
     if movement_keys[0]:
-        tempy = pygame.math.clamp(tempy - round(distance_coefitient), 0, screen.get_height() - player.height)
+        tempy = pygame.math.clamp(tempy - distance_coefitient, 0, screen.get_height() - player.height)
 
     if movement_keys[1]:
-        tempy = pygame.math.clamp(tempy + round(distance_coefitient), 0, screen.get_height() - player.height)
+        tempy = pygame.math.clamp(tempy + distance_coefitient, 0, screen.get_height() - player.height)
 
     if movement_keys[2]:
-        tempx = pygame.math.clamp(tempx - round(distance_coefitient), 0, screen.get_width() - player.width)
+        tempx = pygame.math.clamp(tempx - distance_coefitient, 0, screen.get_width() - player.width)
 
     if movement_keys[3]:
-        tempx = pygame.math.clamp(tempx + round(distance_coefitient), 0, screen.get_width() - player.width)
+        tempx = pygame.math.clamp(tempx + distance_coefitient, 0, screen.get_width() - player.width)
 
 
-    output_coords = colision_detection(player, stationary_hitboxes, old_x, old_y, tempx, tempy)
-
-    return output_coords
+    player_coords = colision_management(player, old_x, old_y, round(tempx), round(tempy), stationary_hitboxes, interactable_hitboxes)
+    player_hitbox.x, player_hitbox.y = player_coords[0], player_coords[1]
 
 # variables for game navigation
 current_screen = "camp"
@@ -196,7 +231,6 @@ while running:
 
 
     if current_screen == "menu":
-        movement = False
         screen.fill("black")
         for button in buttons.values():
             pygame.draw.rect(screen, "white", button)
@@ -209,37 +243,23 @@ while running:
         
 
     if current_screen == "camp":
-        movement = True
         screen.blit(camp_background, (0, 0))
         for i_stationary_hitbox in range(len(camp_wall_hitboxes)):
             pygame.draw.rect(screen, "black", camp_wall_hitboxes[i_stationary_hitbox])
 
         for interactable_hitbox in camp_interactable_hitboxes.values():
             pygame.draw.rect(screen, "red", interactable_hitbox)
-    
+
+        move(player_hitbox, screen, camp_wall_hitboxes, camp_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+        screen.blit(player_image, player_hitbox)
 
     if current_screen == "slime plains":
-        movement = True
         screen.blit(slime_plaind_background, (0, 0))
 
-
-
-    if movement:
-        movement_keys = [keys_pressed[pygame.K_w], keys_pressed[pygame.K_s], keys_pressed[pygame.K_a], keys_pressed[pygame.K_d]]
-
-
-        player_coords = move(movement_keys, player_hitbox, screen, camp_wall_hitboxes, BASE_PLAYER_SPEED, delta_time)
-        player_hitbox.x, player_hitbox.y = player_coords[0], player_coords[1]
-
-
+        #move(player_hitbox, screen, camp_wall_hitboxes, BASE_PLAYER_SPEED, delta_time)
         screen.blit(player_image, player_hitbox)
-    
-
 
 
     update_screen()
 
 pygame.quit()
-
-
-## dodělej pozici hráče jako vektor a až pak zaokrouhluj a nastavuj reálné souřadnice
