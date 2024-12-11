@@ -2,10 +2,10 @@ import random
 
 # třídy
 
-WEAPON = 0
-HEADGEAR = 1
-CHESTPLATE = 2
-LEGGEAR = 3
+HEADGEAR = "head"
+WEAPON = "weapon"
+CHESTPLATE = "chest"
+LEGGEAR = "legs"
 
 
 class Item:

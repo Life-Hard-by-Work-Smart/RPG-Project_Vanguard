@@ -2,13 +2,15 @@ import pygame
 import os
 import entities
 import gui_objects
+import inventory
+import gui_objects
 import items
 import map_objects
 
 # pygame setup
 pygame.init()
 
-
+inventory_cell_font = pygame.font.SysFont("Consolas", 15)
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 running = True
@@ -30,14 +32,51 @@ player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
 
 
 
-# vars and constants for menu
+# vars and constants for button screens
 
-buttons = {}
+class Common_menu_button(pygame.Rect):
+    ...
 
-buttons["back to game"] = pygame.Rect(540, 310, 100, 50)
+class Common_back_button(pygame.Rect):
+    ...
+
+class Common_lower_bar_button(pygame.Rect):
+    ...
+
+### vymysli jak zařídit text
+
+## vars and constants for menu
+
+menu_buttons = {}
+
+class Menu_button(pygame.Rect):
+    ...
+
+menu_buttons["back to game"] = Menu_button(540, 310, 100, 50)
+
+## vars and constants for inventory
+
+cells = {}
+cells.update(inventory.inventory_cells)
+cells.update(inventory.equipement_cells)
+
+inventory_buttons = {}
+inventory_buttons.update(cells)
 
 
+## vars and constants for combat
 
+class Button_for_combat(pygame.Rect):
+    ...
+
+## vars and constants for loot screen
+
+chest_cells = []
+
+##vars and constants for skill screen
+
+class Skill_modify_button(pygame.Rect):
+    ...
 
 
 # vars and constants for movement screen
@@ -99,6 +138,7 @@ player_hitbox_perdiction = player_hitbox.copy()
 
 # custom functions
 
+## screen handling
 def quit_game():
     global running
     running = False
@@ -108,15 +148,34 @@ def update_screen():
     pygame.display.flip()
     delta_time = clock.tick(144) / 1000
 
+def render_inventory_cells(rects: dict, previously_clicked_cell):
+    for rect in rects.values():
+        bg_color = "white"
+        if rect == previously_clicked_cell:
+            bg_color = "red"
+        pygame.draw.rect(screen, bg_color, [rect.x, rect.y, rect.width, rect.height])
+        if rect.item != None:
+            screen.blit(inventory_cell_font.render(rect.item.name, True, "black", None, 100), [rect.x, rect.y, rect.width, rect.height])
+        elif rect.name == "head" or rect.name == "weapon" or rect.name == "chest" or rect.name == "legs":
+            screen.blit(inventory_cell_font.render(rect.name, True, "black", None, 100), [rect.x, rect.y, rect.width, rect.height])
+
+
+## common button interact
+
+def pressed_button(buttons):
+    for name, button in buttons.items():
+            if (button.left < pygame.mouse.get_pos()[0] < (button.left + button.width)) and (button.top < pygame.mouse.get_pos()[1] < (button.top + button.height)):
+                clicked = name
+                print(clicked)
+                return clicked
+
+## colision handling system
+
 def interact(with_what, player_hitbox):
     global current_screen
     if with_what == "slime_plains_portal":
         current_screen = "slime"
         player_hitbox.x, player_hitbox.y = 50, 330
-
-
-## colision handling system
-
 
 def colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, wall):
     colision_x = False
@@ -215,10 +274,22 @@ def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_spee
     interact(new_coords_and_colision[2], player)
 
 # variables for game navigation
-current_screen = "camp"
+current_screen = "inventory"
 previous_screen  = None
 
 
+# variables for inv handling
+clicked_cell = None
+previously_clicked_cell = None
+
+
+
+
+## code for testing
+cells["0"].item = items.dragon_drops[0]
+cells["1"].item = items.dragon_drops[1]
+cells["2"].item = items.dragon_drops[2]
+cells["3"].item = items.dragon_drops[3]
 
 # the game
 
@@ -235,6 +306,7 @@ while running:
         else:
             previous_screen = current_screen
             current_screen = "menu"
+            print(previous_screen)
 
         print(current_screen)
 
@@ -245,14 +317,16 @@ while running:
 
     if current_screen == "menu":
         screen.fill("black")
-        for button in buttons.values():
+        for button in menu_buttons.values():
             pygame.draw.rect(screen, "white", button)
-        for name, button in buttons.items():
-            if pygame.mouse.get_pressed()[0] and (button.left < pygame.mouse.get_pos()[0] < (button.left + button.width)) and (button.top < pygame.mouse.get_pos()[1] < (button.top + button.height)):
-                if name == "back to game":
-                    previous_screen = current_screen
-                    current_screen = "camp"
-        
+
+        pressed_menu_button = None
+        if pygame.mouse.get_pressed()[0]:
+            pressed_menu_button = pressed_button(menu_buttons)  
+        if pressed_menu_button == "back to game":
+            previous_screen = current_screen
+            current_screen = "camp" ## tohle musíš změnit
+    
         
 
     if current_screen == "camp":
@@ -266,6 +340,11 @@ while running:
         move(player_hitbox, screen, camp_wall_hitboxes, camp_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
         print(current_screen)
         screen.blit(player_image, player_hitbox)
+
+
+
+
+
 
     if current_screen == "slime":
         screen.blit(slime_plains_background, (0, 0))
@@ -290,6 +369,26 @@ while running:
 
         move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
         screen.blit(player_image, player_hitbox)
+
+
+
+
+
+    if current_screen == "inventory":
+        screen.fill("black")
+        render_inventory_cells(inventory_buttons, previously_clicked_cell)
+        pressed_inventory_button = None
+        if pygame.mouse.get_just_pressed()[0]:
+            pressed_inventory_button = pressed_button(inventory_buttons)
+            if pressed_inventory_button not in cells.keys():
+                previously_clicked_cell = None
+
+        if pressed_inventory_button in cells.keys():
+            clicked_cell = cells[pressed_inventory_button]
+            transfare_output = inventory.item_transfare_handler(previously_clicked_cell, clicked_cell, cells)
+            previously_clicked_cell, clicked_cell = transfare_output[0], transfare_output[1]
+            if transfare_output[2] != None or transfare_output[3] != None:
+                cells[transfare_output[2].name], cells[transfare_output[3].name] = transfare_output[2], transfare_output[3]
 
     update_screen()
 
