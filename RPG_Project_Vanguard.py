@@ -11,6 +11,7 @@ import map_objects
 pygame.init()
 
 inventory_cell_font = pygame.font.SysFont("Consolas", 15)
+common_button_font = pygame.font.SysFont("Consolas", 25)
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 running = True
@@ -33,26 +34,11 @@ player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
 
 
 # vars and constants for button screens
-
-class Common_menu_button(pygame.Rect):
-    ...
-
-class Common_back_button(pygame.Rect):
-    ...
-
-class Common_lower_bar_button(pygame.Rect):
-    ...
-
-### vymysli jak zařídit text
-
 ## vars and constants for menu
 
 menu_buttons = {}
 
-class Menu_button(pygame.Rect):
-    ...
-
-menu_buttons["back to game"] = Menu_button(540, 310, 100, 50)
+menu_buttons["back to last screen"] = gui_objects.Menu_button(540, 310, 300, 80)
 
 ## vars and constants for inventory
 
@@ -60,10 +46,12 @@ cells = {}
 cells.update(inventory.inventory_cells)
 cells.update(inventory.equipement_cells)
 
-inventory_buttons = {}
-inventory_buttons.update(cells)
+other_inventory_buttons = {}
+other_inventory_buttons["back to game"] = gui_objects.Common_back_button(1000, 20)
 
-
+all_inventory_butons = {}
+all_inventory_butons.update(cells)
+all_inventory_butons.update(other_inventory_buttons)
 ## vars and constants for combat
 
 class Button_for_combat(pygame.Rect):
@@ -148,6 +136,21 @@ def update_screen():
     pygame.display.flip()
     delta_time = clock.tick(144) / 1000
 
+def switch_screens():
+    global game_screen, current_screen, previous_screen
+    temp_screen = current_screen
+    current_screen = previous_screen
+    previous_screen = temp_screen
+    print(game_screen, current_screen, previous_screen)
+
+def back_to_game():
+    global game_screen, current_screen, previous_screen
+    previous_screen = current_screen
+    current_screen = game_screen
+    print(game_screen, current_screen, previous_screen)
+
+    
+
 def render_inventory_cells(rects: dict, previously_clicked_cell):
     for rect in rects.values():
         bg_color = "white"
@@ -159,22 +162,26 @@ def render_inventory_cells(rects: dict, previously_clicked_cell):
         elif rect.name == "head" or rect.name == "weapon" or rect.name == "chest" or rect.name == "legs":
             screen.blit(inventory_cell_font.render(rect.name, True, "black", None, 100), [rect.x, rect.y, rect.width, rect.height])
 
+def render_buttons(rects: dict):
+    for key, rect in rects.items():
+        pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
+        screen.blit(common_button_font.render(key, True, "black", None, 300), [rect.x, rect.y, rect.width, rect.height])
 
 ## common button interact
 
 def pressed_button(buttons):
-    for name, button in buttons.items():
+    for key, button in buttons.items():
             if (button.left < pygame.mouse.get_pos()[0] < (button.left + button.width)) and (button.top < pygame.mouse.get_pos()[1] < (button.top + button.height)):
-                clicked = name
-                print(clicked)
+                clicked = key
                 return clicked
 
 ## colision handling system
 
 def interact(with_what, player_hitbox):
-    global current_screen
+    global game_screen, current_screen
     if with_what == "slime_plains_portal":
         current_screen = "slime"
+        game_screen = current_screen
         player_hitbox.x, player_hitbox.y = 50, 330
 
 def colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, wall):
@@ -274,8 +281,9 @@ def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_spee
     interact(new_coords_and_colision[2], player)
 
 # variables for game navigation
-current_screen = "inventory"
+current_screen = "camp"
 previous_screen  = None
+game_screen = "camp"
 
 
 # variables for inv handling
@@ -303,12 +311,22 @@ while running:
     if keys_down[pygame.K_ESCAPE] == True:
         if current_screen == "menu":
             current_screen = previous_screen
+            previous_screen = "menu"
         else:
             previous_screen = current_screen
             current_screen = "menu"
-            print(previous_screen)
+        print(game_screen, current_screen, previous_screen)
+            
+    
+    if keys_down[pygame.K_e] == True and current_screen != "menu":
+        if current_screen == "inventory":
+            current_screen = game_screen
+            previous_screen = "inventory"
+        else:
+            previous_screen = game_screen
+            current_screen = "inventory"
+        print(game_screen, current_screen, previous_screen)
 
-        print(current_screen)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -317,17 +335,17 @@ while running:
 
     if current_screen == "menu":
         screen.fill("black")
-        for button in menu_buttons.values():
-            pygame.draw.rect(screen, "white", button)
+        render_buttons(menu_buttons)
 
         pressed_menu_button = None
         if pygame.mouse.get_pressed()[0]:
             pressed_menu_button = pressed_button(menu_buttons)  
-        if pressed_menu_button == "back to game":
-            previous_screen = current_screen
-            current_screen = "camp" ## tohle musíš změnit
-    
+            if pressed_menu_button == "back to last screen":
+                switch_screens()
         
+
+
+
 
     if current_screen == "camp":
         screen.blit(camp_background, (0, 0))
@@ -338,13 +356,7 @@ while running:
             pygame.draw.rect(screen, "red", interactable_hitbox)
 
         move(player_hitbox, screen, camp_wall_hitboxes, camp_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
-        print(current_screen)
         screen.blit(player_image, player_hitbox)
-
-
-
-
-
 
     if current_screen == "slime":
         screen.blit(slime_plains_background, (0, 0))
@@ -376,12 +388,15 @@ while running:
 
     if current_screen == "inventory":
         screen.fill("black")
-        render_inventory_cells(inventory_buttons, previously_clicked_cell)
+        render_inventory_cells(cells, previously_clicked_cell)
+        render_buttons(other_inventory_buttons)
         pressed_inventory_button = None
         if pygame.mouse.get_just_pressed()[0]:
-            pressed_inventory_button = pressed_button(inventory_buttons)
+            pressed_inventory_button = pressed_button(all_inventory_butons)
             if pressed_inventory_button not in cells.keys():
                 previously_clicked_cell = None
+                if pressed_inventory_button == "back to game":
+                    back_to_game()
 
         if pressed_inventory_button in cells.keys():
             clicked_cell = cells[pressed_inventory_button]
