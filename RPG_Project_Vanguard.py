@@ -10,13 +10,15 @@ import map_objects
 # pygame setup
 pygame.init()
 
-inventory_cell_font = pygame.font.SysFont("Consolas", 15)
-common_button_font = pygame.font.SysFont("Consolas", 25)
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 running = True
 delta_time = 0
 
+# various fonts
+inventory_cell_font = pygame.font.SysFont("Consolas", 15)
+common_button_font = pygame.font.SysFont("Consolas", 25)
+fight_font = pygame.font.SysFont("Consolas", 35)
 
 # asset loading
 dirname = os.path.dirname(__file__)
@@ -32,34 +34,48 @@ player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
 
 
 
-
+# /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # vars and constants for button screens
+
+
+
+
 ## vars and constants for menu
 
 menu_buttons = {}
 
-menu_buttons["back to last screen"] = gui_objects.Menu_button(540, 310, 300, 80)
+menu_buttons["back to last screen"] = pygame.Rect(540, 310, 300, 80)
 
 ## vars and constants for inventory
 
-cells = {}
-cells.update(inventory.inventory_cells)
-cells.update(inventory.equipement_cells)
+### backpack
+backpack_cells = {}
+backpack_cells.update(inventory.inventory_cells)
+backpack_cells.update(inventory.equipement_cells)
 
-other_inventory_buttons = {}
-other_inventory_buttons["back to game"] = gui_objects.Common_back_button(1000, 20)
 
-all_inventory_butons = {}
-all_inventory_butons.update(cells)
-all_inventory_butons.update(other_inventory_buttons)
+### chest
+chest_cells = {}
+chest_cells.update(inventory.inventory_cells)
+chest_cells.update(inventory.chest_cells)
+
+other_chest_buttons = {}
+other_chest_buttons["back to camp"] = gui_objects.Common_back_button(1000, 20)
+
+all_chest_butons = {}
+all_chest_butons.update(chest_cells)
+all_chest_butons.update(other_chest_buttons)
+
 ## vars and constants for combat
 
-class Button_for_combat(pygame.Rect):
-    ...
+player = entities.Player("Burymuru", inventory.equipement_cells)
+enemy = None
 
-## vars and constants for loot screen
 
-chest_cells = []
+combat_buttons = {}
+combat_buttons["Attack"] = gui_objects.Common_menu_button(95*1 + (gui_objects.Common_menu_button.common_width) * 0, screen.get_height() - gui_objects.Common_menu_button.common_height - 50)
+combat_buttons["Heal"] = gui_objects.Common_menu_button(95*2 + (gui_objects.Common_menu_button.common_width) * 1, screen.get_height() - gui_objects.Common_menu_button.common_height - 50)
+combat_buttons["Flee"] = gui_objects.Common_menu_button(95*3 + (gui_objects.Common_menu_button.common_width) * 2, screen.get_height() - gui_objects.Common_menu_button.common_height - 50)
 
 ##vars and constants for skill screen
 
@@ -67,7 +83,12 @@ class Skill_modify_button(pygame.Rect):
     ...
 
 
+# /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # vars and constants for movement screen
+
+
+
+
 ## maps
 map_border = pygame.Rect(5, 5, 1270, 710)
 
@@ -80,51 +101,57 @@ camp_wall_hitboxes.append(wall_1)
 wall_2 = pygame.Rect(200, 260, 200, 30)
 camp_wall_hitboxes.append(wall_2)
 
+wall_3 = pygame.Rect(200, 460, 200, 30)
+camp_wall_hitboxes.append(wall_3)
+
 
 camp_interactable_hitboxes = {}
 
 PORTAL_DISPLACEMENT_Y = 64
-camp_interactable_hitboxes["slime_plains_portal"] = map_objects.portal_rect(1270, PORTAL_DISPLACEMENT_Y)
-camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
-camp_interactable_hitboxes["wivern_mountains_portal"] = map_objects.portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
-camp_interactable_hitboxes["dragons_lair_portal"] = map_objects.portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wivern_mountains_portal"].height)
-
-
+camp_interactable_hitboxes["slime_plains_portal"] = map_objects.Portal_rect(1270, PORTAL_DISPLACEMENT_Y)
+camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.Portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
+camp_interactable_hitboxes["wyvern_mountains_portal"] = map_objects.Portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
+camp_interactable_hitboxes["dragon_lair_portal"] = map_objects.Portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wyvern_mountains_portal"].height)
 
 ## slime plains
 
 slime_wall_hitboxes = []
 
-slime_interacrtable_hitboxes = {}
-
+slime_interactable_hitboxes = {}
+slime_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
+slime_interactable_hitboxes["slime_enemy"] = map_objects.Entity_rect((screen.get_width() - map_objects.Entity_rect.common_width)/2, (screen.get_height() - map_objects.Entity_rect.common_height)/2)
 ## golem ruins
 
 golem_wall_hitboxes = []
 
-golem_interacrtable_hitboxes = {}
-
+golem_interactable_hitboxes = {}
+golem_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
 ## wyvern montains
 
 wyvern_wall_hitboxes = []
 
-wyvern_interacrtable_hitboxes = {}
-
+wyvern_interactable_hitboxes = {}
+wyvern_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
 ## dragon's lair
 
 dragon_wall_hitboxes = []
 
-dragon_interacrtable_hitboxes = {}
-
+dragon_interactable_hitboxes = {}
+dragon_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
 
 # player
 BASE_PLAYER_SPEED = 300
 
 player_hitbox = pygame.Rect(screen.get_width()/2, screen.get_height()/2, player_image.get_width(), player_image.get_height())
-print(player_image.get_height())
 player_hitbox_perdiction = player_hitbox.copy()
 
 
+
+# /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # custom functions
+
+
+
 
 ## screen handling
 def quit_game():
@@ -146,11 +173,17 @@ def switch_screens():
 def back_to_game():
     global game_screen, current_screen, previous_screen
     previous_screen = current_screen
-    current_screen = game_screen
+    current_screen = "ingame"
     print(game_screen, current_screen, previous_screen)
 
+def render_walls(rects: list):
+    for rect in rects:
+        pygame.draw.rect(screen, "black", rect)
     
-
+def render_interactables(rects: dict):
+    for key, rect in rects.items():
+        pygame.draw.rect(screen, "red", [rect.x, rect.y, rect.width, rect.height])
+ 
 def render_inventory_cells(rects: dict, previously_clicked_cell):
     for rect in rects.values():
         bg_color = "white"
@@ -167,6 +200,15 @@ def render_buttons(rects: dict):
         pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
         screen.blit(common_button_font.render(key, True, "black", None, 300), [rect.x, rect.y, rect.width, rect.height])
 
+def render_text(text, x, y, width, height):
+    screen.blit(fight_font.render(text, True, "white", None, width), [x, y, width, height])
+
+def render_stats(entity, x, y):
+    text = f"{entity.name} lvl:{entity.lvl}; HP: {entity.current_hp}/{entity.max_hp}"
+
+    screen.blit(fight_font.render(text, True, "white", None, 500), [x, y, 615, 100])
+
+
 ## common button interact
 
 def pressed_button(buttons):
@@ -175,14 +217,8 @@ def pressed_button(buttons):
                 clicked = key
                 return clicked
 
-## colision handling system
 
-def interact(with_what, player_hitbox):
-    global game_screen, current_screen
-    if with_what == "slime_plains_portal":
-        current_screen = "slime"
-        game_screen = current_screen
-        player_hitbox.x, player_hitbox.y = 50, 330
+## colision handling system
 
 def colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, wall):
     colision_x = False
@@ -214,7 +250,7 @@ def dict_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, interac
     
     return [colisions[0], colisions[1], colided_with]
 
-def colision_management(player_hitbox: pygame.Rect, old_x: int, old_y: int, temp_x: int, temp_y: int, stationary_hitboxes: list, interactable_hitboxes: dict,):
+def colision_management(player_hitbox: pygame.Rect, old_x: int, old_y: int, temp_x: int, temp_y: int, stationary_hitboxes: list, interactable_hitboxes: dict):
     disable_x, disable_y = False, False
 
     list_colisions = list_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, stationary_hitboxes)
@@ -253,6 +289,41 @@ def speed_normalization(movement_keys, player_speed, delta_time):
     distance_coefitient = player_speed * delta_time / speed_normalizer
     return distance_coefitient
 
+def interact(interacted_with, player_hitbox):
+    global game_screen, current_screen
+    if interacted_with == "slime_plains_portal":
+        game_screen = "slime"
+        player_hitbox.x, player_hitbox.y = 50, 330
+    
+    if interacted_with == "golem_ruins_portal":
+        game_screen = "golem"
+        player_hitbox.x, player_hitbox.y = 50, 330
+    
+    if interacted_with == "wyvern_mountains_portal":
+        game_screen = "wyvern"
+        player_hitbox.x, player_hitbox.y = 50, 330
+    
+    if interacted_with == "dragon_lair_portal":
+        game_screen = "dragon"
+        player_hitbox.x, player_hitbox.y = 50, 330
+
+    if interacted_with == "camp_portal":
+        global player
+        game_screen = "camp"
+        player_hitbox.x, player_hitbox.y = screen.get_width() - 100, 330
+        player.update_stats(inventory.equipement_cells)
+    
+    if interacted_with == "slime_enemy":
+        global enemy, previous_screen
+        previous_screen = current_screen
+        current_screen = "combat"
+        enemy = entities.Slime()
+        enemy.update_stats()
+
+
+
+## main interaction/movement processor
+
 def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_speed, delta_time):
     movement_keys = [keys_pressed[pygame.K_w], keys_pressed[pygame.K_s], keys_pressed[pygame.K_a], keys_pressed[pygame.K_d]]
     old_x = player.x
@@ -280,11 +351,44 @@ def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_spee
     
     interact(new_coords_and_colision[2], player)
 
-# variables for game navigation
-current_screen = "camp"
-previous_screen  = None
-game_screen = "camp"
+## combat functions
 
+
+def attack(entity_1, entity_2):
+    end = False
+    entity_2.current_hp = entity_2.current_hp - entity_1.damage_per_hit
+    if entity_2.current_hp <= 0:
+        end = True
+    return (entity_2, end)
+
+
+def heal(entity):
+    entity.current_hp = entity.current_hp + entity.healing_amount
+    return entity
+
+def enemy_action(enemy: entities.Enemy, player: entities.Player):
+    end = False
+    if enemy.max_hp - enemy.current_hp > enemy.healing_amount and enemy.current_hp/enemy.max_hp <= 1/3:
+        enemy = heal(enemy)
+    else:
+        attack_result = attack(enemy, player)
+        player = attack_result[0]
+        end = attack_result[1]
+    
+    return(enemy, player, end)
+
+
+## text window
+
+# /////////////////////////////////////////////////////////////////////////////////////////////////////////
+# setup shits... idk
+
+
+
+# variables for game navigation
+current_screen = "ingame"
+previous_screen  = "ingame"
+game_screen = "camp"
 
 # variables for inv handling
 clicked_cell = None
@@ -294,12 +398,14 @@ previously_clicked_cell = None
 
 
 ## code for testing
-cells["0"].item = items.dragon_drops[0]
-cells["1"].item = items.dragon_drops[1]
-cells["2"].item = items.dragon_drops[2]
-cells["3"].item = items.dragon_drops[3]
 
+
+# /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # the game
+
+
+
+
 
 while running:
 
@@ -319,18 +425,19 @@ while running:
             
     
     if keys_down[pygame.K_e] == True and current_screen != "menu":
-        if current_screen == "inventory":
-            current_screen = game_screen
-            previous_screen = "inventory"
-        else:
-            previous_screen = game_screen
+        if current_screen == "inventory" and inventory_type == "backpack":
+            back_to_game()
+        elif current_screen == "ingame":
+            previous_screen = current_screen
             current_screen = "inventory"
+            inventory_type = "backpack"
         print(game_screen, current_screen, previous_screen)
 
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             quit_game()
+
 
 
     if current_screen == "menu":
@@ -343,77 +450,148 @@ while running:
             if pressed_menu_button == "back to last screen":
                 switch_screens()
         
-
-
-
-
-    if current_screen == "camp":
-        screen.blit(camp_background, (0, 0))
-        for i_stationary_hitbox in range(len(camp_wall_hitboxes)):
-            pygame.draw.rect(screen, "black", camp_wall_hitboxes[i_stationary_hitbox])
-
-        for interactable_hitbox in camp_interactable_hitboxes.values():
-            pygame.draw.rect(screen, "red", interactable_hitbox)
-
-        move(player_hitbox, screen, camp_wall_hitboxes, camp_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
-        screen.blit(player_image, player_hitbox)
-
-    if current_screen == "slime":
-        screen.blit(slime_plains_background, (0, 0))
-
-        move(player_hitbox, screen, slime_wall_hitboxes, slime_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
-        screen.blit(player_image, player_hitbox)
-
-    if current_screen == "golem":
-        #screen.blit(golem_plains_background, (0, 0))
-
-        move(player_hitbox, screen, golem_wall_hitboxes, golem_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
-        screen.blit(player_image, player_hitbox)
-
-    if current_screen == "wyvern":
-        #screen.blit(wyvern_plains_background, (0, 0))
-
-        move(player_hitbox, screen, wyvern_wall_hitboxes, wyvern_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
-        screen.blit(player_image, player_hitbox)
     
-    if current_screen == "dragon":
-        #screen.blit(dragon_plains_background, (0, 0))
-
-        move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interacrtable_hitboxes, BASE_PLAYER_SPEED, delta_time)
-        screen.blit(player_image, player_hitbox)
-
-
-
-
-
     if current_screen == "inventory":
         screen.fill("black")
-        render_inventory_cells(cells, previously_clicked_cell)
-        render_buttons(other_inventory_buttons)
+        render_inventory_cells(inventory.inventory_cells, previously_clicked_cell)
         pressed_inventory_button = None
-        if pygame.mouse.get_just_pressed()[0]:
-            pressed_inventory_button = pressed_button(all_inventory_butons)
-            if pressed_inventory_button not in cells.keys():
-                previously_clicked_cell = None
-                if pressed_inventory_button == "back to game":
-                    back_to_game()
 
-        if pressed_inventory_button in cells.keys():
-            clicked_cell = cells[pressed_inventory_button]
-            transfare_output = inventory.item_transfare_handler(previously_clicked_cell, clicked_cell, cells)
-            previously_clicked_cell, clicked_cell = transfare_output[0], transfare_output[1]
-            if transfare_output[2] != None or transfare_output[3] != None:
-                cells[transfare_output[2].name], cells[transfare_output[3].name] = transfare_output[2], transfare_output[3]
+        if inventory_type == "backpack":
+            render_inventory_cells(inventory.equipement_cells, previously_clicked_cell)
+            all_buttons_on_screen, active_inventory = backpack_cells, backpack_cells
+
+        
+        elif inventory_type == "chest":
+            render_inventory_cells(inventory.chest_cells, previously_clicked_cell)
+            render_buttons(other_chest_buttons)
+            all_buttons_on_screen, active_inventory = all_chest_butons, chest_cells
+        
+        
+        if pygame.mouse.get_just_pressed()[0]:
+            pressed_inventory_button = pressed_button(all_buttons_on_screen)
+            if pressed_inventory_button not in active_inventory.keys():
+                previously_clicked_cell = None
+                if pressed_inventory_button == "back to camp":
+                    inventory.clear_chest(inventory.chest_cells)
+                    back_to_game()
+                    player.update_stats(inventory.equipement_cells)
+
+            else:
+                clicked_cell = active_inventory[pressed_inventory_button]
+                transfare_output = inventory.item_transfare_handler(previously_clicked_cell, clicked_cell, active_inventory)
+                previously_clicked_cell, clicked_cell = transfare_output[0], transfare_output[1]
+                if transfare_output[2] != None or transfare_output[3] != None:
+                    active_inventory[transfare_output[2].name], active_inventory[transfare_output[3].name] = transfare_output[2], transfare_output[3]
+
+
+
+    if current_screen == "ingame":
+        if game_screen == "camp":
+
+            screen.blit(camp_background, (0, 0))
+            render_walls(camp_wall_hitboxes)
+            render_interactables(camp_interactable_hitboxes)
+
+            move(player_hitbox, screen, camp_wall_hitboxes, camp_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+            screen.blit(player_image, player_hitbox)
+        
+        if game_screen == "slime":
+            screen.blit(slime_plains_background, (0, 0))
+            render_walls(slime_wall_hitboxes)
+            render_interactables(slime_interactable_hitboxes)
+
+            move(player_hitbox, screen, slime_wall_hitboxes, slime_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+            screen.blit(player_image, player_hitbox)
+
+        if game_screen == "golem":
+            # screen.blit(golem_plains_background, (0, 0))
+            screen.fill("black")
+            render_interactables(golem_interactable_hitboxes)
+
+            move(player_hitbox, screen, golem_wall_hitboxes, golem_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+            screen.blit(player_image, player_hitbox)
+
+        if game_screen == "wyvern":
+            # screen.blit(wyvern_plains_background, (0, 0))
+            screen.fill("black")
+            render_interactables(wyvern_interactable_hitboxes)
+
+            move(player_hitbox, screen, wyvern_wall_hitboxes, wyvern_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+            screen.blit(player_image, player_hitbox)
+        
+        if game_screen == "dragon":
+            # screen.blit(dragon_plains_background, (0, 0))
+            screen.fill("black")
+            render_interactables(dragon_interactable_hitboxes)
+
+            move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+            screen.blit(player_image, player_hitbox)
+
+
+    if current_screen == "combat":
+        screen.fill("black")
+        
+        render_buttons(combat_buttons)
+
+        render_stats(player, 25, 25)
+        render_stats(enemy, 640 + 25, 450)
+
+
+        if pygame.mouse.get_just_pressed()[0]:
+            pressed_combat_button = pressed_button(combat_buttons)
+            match(pressed_combat_button):
+                case("Attack"):
+                    # current_screen = "writing"
+                    attack_result = attack(player, enemy)
+                    enemy = attack_result[0]
+                    if attack_result[1] == False:
+                        enemy_action_result = enemy_action(enemy, player)
+                        enemy = enemy_action_result[0]
+                        player = enemy_action_result[1]
+
+                        if enemy_action_result[2] == True:
+                            game_screen = "camp"
+                            player.update_stats(inventory.equipement_cells)
+                            enemy = None
+                    else:
+                        game_screen = "camp"
+                        current_screen = "inventory"
+                        inventory_type = "chest"
+                        inventory.assign_drops(inventory.chest_cells, items.generate_drops(enemy))
+                        player.gain_xp(enemy.xp)
+                        enemy = None
+                   
+                case("Heal"):
+                    # current_screen = "writing"
+                    player = heal(player)
+                    enemy_action_result = enemy_action(enemy, player)
+                    enemy = enemy_action_result[0]
+                    player = enemy_action_result[1]
+
+                    if enemy_action_result[2] == True:
+                        game_screen = "camp"
+                        player.update_stats(inventory.equipement_cells)
+                        enemy = None
+
+                case("Flee"):
+                    # current_screen = "writing"
+                    switch_screens()
+                    enemy = None
+
+
+    if current_screen == "skills":
+        ...
+    # if current_screen == "writing":
+    #     ...
+
+
+
 
     update_screen()
 
 pygame.quit()
 
-
-
 # To Do List:
-# zbytek lokací
-# inventory screen
-# combat screen
-# loot screen
-# skill screen
+# chest screen
+# skill screen (skylly a exp na konci boje)
+# welcome screen

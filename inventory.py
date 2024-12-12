@@ -13,6 +13,7 @@ class Inventory_cell(pygame.Rect):
 
 NUMBER_OF_CELLS_IN_INV_GRID = 36
 NUMBER_OF_EQUIPEMENT_CELLS = 4
+NUMBER_OF_CHEST_CELLS = 6
 EQUIPEMENT_CELL_NAMES = ["head", "weapon", "chest", "legs"]
 
 def generate_inventory():
@@ -23,15 +24,22 @@ def generate_inventory():
     return inventory_cells
 
 def generate_equipement_slots():
-    equipement_slots = {}
+    equipement_cells = {}
     for i in range(NUMBER_OF_EQUIPEMENT_CELLS):
-        equipement_slots[EQUIPEMENT_CELL_NAMES[i]] = Inventory_cell(100, 136 + Inventory_cell.common_widht_and_height * i + 16 * i, EQUIPEMENT_CELL_NAMES[i], None)
-        equipement_slots[EQUIPEMENT_CELL_NAMES[i]].item = None
-    return equipement_slots
+        equipement_cells[EQUIPEMENT_CELL_NAMES[i]] = Inventory_cell(100, 136 + Inventory_cell.common_widht_and_height * i + 16 * i, EQUIPEMENT_CELL_NAMES[i], None)
+    return equipement_cells
+
+def generate_chest_slots():
+    chest_cells = {}
+    for i in range(NUMBER_OF_CHEST_CELLS):
+        chest_cells[f"c{i}"] = Inventory_cell(100, 20 + Inventory_cell.common_widht_and_height * i + 16 * i, f"c{i}", None)
+    return chest_cells
 
 inventory_cells = generate_inventory()
 
 equipement_cells = generate_equipement_slots()
+
+chest_cells = generate_chest_slots()
 
 def transferable(previously_clicked_cell, clicked_cell):
     bool_transferable = True
@@ -78,3 +86,11 @@ def item_transfare_handler(previously_clicked_cell: Inventory_cell, clicked_cell
         clicked_cell = None
         print("stored")
     return (previously_clicked_cell, clicked_cell, None, None)
+
+def assign_drops(cells: dict, drops: list):
+    for i in range(len(drops)):
+        cells[f"c{i}"].item = drops[i]
+
+def clear_chest(cells:dict):
+    for cell in cells.values():
+        cell.item = None
