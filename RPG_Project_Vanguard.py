@@ -15,6 +15,9 @@ clock = pygame.time.Clock()
 running = True
 delta_time = 0
 
+player = entities.Player("Burymuru", inventory.equipement_cells)
+enemy = None
+
 # various fonts
 inventory_cell_font = pygame.font.SysFont("Consolas", 15)
 common_button_font = pygame.font.SysFont("Consolas", 25)
@@ -68,9 +71,6 @@ all_chest_butons.update(other_chest_buttons)
 
 ## vars and constants for combat
 
-player = entities.Player("Burymuru", inventory.equipement_cells)
-enemy = None
-
 
 combat_buttons = {}
 combat_buttons["Attack"] = gui_objects.Common_menu_button(95*1 + (gui_objects.Common_menu_button.common_width) * 0, screen.get_height() - gui_objects.Common_menu_button.common_height - 50)
@@ -79,8 +79,20 @@ combat_buttons["Flee"] = gui_objects.Common_menu_button(95*3 + (gui_objects.Comm
 
 ##vars and constants for skill screen
 
-class Skill_modify_button(pygame.Rect):
-    ...
+skill_buttons = {}
+skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(400,      25 + 40*10, 1)
+skill_buttons["health_lvl_sub"] = gui_objects.Skill_modify_button(400 + 40, 25 + 40*10, -1)
+skill_buttons["damage_lvl_add"] = gui_objects.Skill_modify_button(400,      25 + 40*11, 1)
+skill_buttons["damage_lvl_sub"] = gui_objects.Skill_modify_button(400 + 40, 25 + 40*11, -1)
+skill_buttons["healing_lvl_add"] = gui_objects.Skill_modify_button(400,      25 + 40*12, 1)
+skill_buttons["healing_lvl_sub"] = gui_objects.Skill_modify_button(400 + 40, 25 + 40*12, -1)
+
+other_skill_buttons = {}
+other_skill_buttons["back_to_game"] = gui_objects.Common_back_button(1000, 20)
+
+all_skill_buttons = {}
+all_skill_buttons.update(skill_buttons)
+all_skill_buttons.update(other_skill_buttons)
 
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,7 +124,7 @@ camp_interactable_hitboxes["slime_plains_portal"] = map_objects.Portal_rect(1270
 camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.Portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
 camp_interactable_hitboxes["wyvern_mountains_portal"] = map_objects.Portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
 camp_interactable_hitboxes["dragon_lair_portal"] = map_objects.Portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wyvern_mountains_portal"].height)
-
+camp_interactable_hitboxes["skill_merchant"] = pygame.Rect(265, 325, 100, 100)
 ## slime plains
 
 slime_wall_hitboxes = []
@@ -194,6 +206,13 @@ def render_inventory_cells(rects: dict, previously_clicked_cell):
             screen.blit(inventory_cell_font.render(rect.item.name, True, "black", None, 100), [rect.x, rect.y, rect.width, rect.height])
         elif rect.name == "head" or rect.name == "weapon" or rect.name == "chest" or rect.name == "legs":
             screen.blit(inventory_cell_font.render(rect.name, True, "black", None, 100), [rect.x, rect.y, rect.width, rect.height])
+
+def render_skill_buttons(buttons):
+    for rect in buttons.values():
+        pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
+        if rect.projected_value == 1: operand = "+" 
+        else: operand = "-"
+        screen.blit(fight_font.render(operand, True, "white", "black", 300), [rect.x, rect.y, rect.width, rect.height])
 
 def render_buttons(rects: dict):
     for key, rect in rects.items():
@@ -290,7 +309,7 @@ def speed_normalization(movement_keys, player_speed, delta_time):
     return distance_coefitient
 
 def interact(interacted_with, player_hitbox):
-    global game_screen, current_screen
+    global game_screen, current_screen, previous_screen, enemy, player
     if interacted_with == "slime_plains_portal":
         game_screen = "slime"
         player_hitbox.x, player_hitbox.y = 50, 330
@@ -306,19 +325,23 @@ def interact(interacted_with, player_hitbox):
     if interacted_with == "dragon_lair_portal":
         game_screen = "dragon"
         player_hitbox.x, player_hitbox.y = 50, 330
+    
+    if interacted_with == "skill_merchant":
+        previous_screen = current_screen
+        current_screen = "skills"
+        player.update_stats(inventory.equipement_cells)
 
     if interacted_with == "camp_portal":
-        global player
         game_screen = "camp"
         player_hitbox.x, player_hitbox.y = screen.get_width() - 100, 330
         player.update_stats(inventory.equipement_cells)
     
     if interacted_with == "slime_enemy":
-        global enemy, previous_screen
         previous_screen = current_screen
         current_screen = "combat"
         enemy = entities.Slime()
         enemy.update_stats()
+
 
 
 
@@ -377,9 +400,6 @@ def enemy_action(enemy: entities.Enemy, player: entities.Player):
     
     return(enemy, player, end)
 
-
-## text window
-
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # setup shits... idk
 
@@ -399,6 +419,7 @@ previously_clicked_cell = None
 
 ## code for testing
 
+player.free_skill_points = 2
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # the game
@@ -424,7 +445,7 @@ while running:
         print(game_screen, current_screen, previous_screen)
             
     
-    if keys_down[pygame.K_e] == True and current_screen != "menu":
+    if keys_down[pygame.K_e] == True and current_screen != "menu" and current_screen != "skills":
         if current_screen == "inventory" and inventory_type == "backpack":
             back_to_game()
         elif current_screen == "ingame":
@@ -580,7 +601,48 @@ while running:
 
 
     if current_screen == "skills":
-        ...
+        screen.fill("black")
+        render_text(f"Name:             {player.name}", 25, 25, 600, 40)
+        render_text(f"lvl:              {player.lvl}", 25, 25 + 40*1, 600, 40)
+        render_text(f"XP:               {player.xp}/{player.xp_treshold}", 25, 25 + 40*2, 600, 40)
+        render_text(f"Max HP:           {player.max_hp}", 25, 25 + 40*3, 600, 40)
+        render_text(f"Damage:           {player.damage_per_hit}", 25, 25 + 40*4, 600, 40)
+        render_text(f"Healing:          {player.healing_amount}", 25, 25 + 40*5, 600, 40)
+
+        render_text("------------------------------", 25, 25 + 40*7, 600, 40)
+
+        render_text(f"Free skill point: {player.free_skill_points}", 25, 25 + 40*9, 600, 40)
+        render_text(f"Halth LVL:        {player.health_lvl}", 25, 25 + 40*10, 400, 40)
+        render_text(f"Damage LVL:       {player.damage_lvl}", 25, 25 + 40*11, 400, 40)
+        render_text(f"Healing LVL:      {player.healing_lvl}", 25, 25 + 40*12, 400, 40)
+
+        # 6 butttonů na modifikaci skillů
+        
+        render_skill_buttons(skill_buttons)
+        render_buttons(other_skill_buttons)
+
+        if pygame.mouse.get_just_pressed()[0]:
+            pressed_skill_button = pressed_button(all_skill_buttons)
+            if pressed_skill_button == "back_to_game":
+                switch_screens()
+
+            elif pressed_skill_button in skill_buttons:
+                if pressed_skill_button.startswith("health_lvl") and (player.health_lvl + skill_buttons[pressed_skill_button].projected_value) != 0 and (player.free_skill_points - skill_buttons[pressed_skill_button].projected_value) != -1:
+                    player.health_lvl += skill_buttons[pressed_skill_button].projected_value
+                    player.free_skill_points -= skill_buttons[pressed_skill_button].projected_value
+                    player.update_stats(inventory.equipement_cells)
+                elif pressed_skill_button.startswith("damage_lvl") and (player.damage_lvl + skill_buttons[pressed_skill_button].projected_value) != 0 and (player.free_skill_points - skill_buttons[pressed_skill_button].projected_value) != -1:
+                    player.damage_lvl += skill_buttons[pressed_skill_button].projected_value
+                    player.free_skill_points -= skill_buttons[pressed_skill_button].projected_value
+                    player.update_stats(inventory.equipement_cells)
+                elif pressed_skill_button.startswith("healing_lvl") and player.healing_lvl + skill_buttons[pressed_skill_button].projected_value != -1 and (player.free_skill_points - skill_buttons[pressed_skill_button].projected_value) != -1:
+                    player.healing_lvl += skill_buttons[pressed_skill_button].projected_value
+                    player.free_skill_points -= skill_buttons[pressed_skill_button].projected_value
+                    player.update_stats(inventory.equipement_cells)
+    
+    
+    
+    
     # if current_screen == "writing":
     #     ...
 
