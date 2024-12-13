@@ -22,7 +22,7 @@ class Item:
 
 items = [
     Item("Bouncy Helmet", 0, 3, "head"),
-    Item("Half-Liquid Sword", 1, 0, "weapon")
+    Item("Half-Liquid Sword", 1, 0, "weapon"),
     Item("Bouncy Chestplate", 0, 6, "chest"),
     Item("Gooey Chestplate", 0, 10, "chest"),
     Item("Bouncy Leggings", 0, 3, "legs"),
