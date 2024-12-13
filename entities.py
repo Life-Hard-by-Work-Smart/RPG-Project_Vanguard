@@ -74,13 +74,13 @@ class Player():
                 self.damage_modifier += slot.item.damage_modifier
 
         self.max_hp = self.health_lvl * 10 + self.health_modifier
-        self.current_hp = self.max_hp
         self.healing_amount = self.healing_lvl * self.healing_lvl
         self.damage_per_hit = self.damage_lvl * 3 + self.damage_modifier
         self.expTreshold = 100 + 50 * self.lvl
         self.bombice()
 
     def lvl_up(self):
+        self.max_heal()
         self.lvl += 1
         self.free_skill_points += 1
         self.xp -= self.xp_treshold
@@ -91,6 +91,9 @@ class Player():
         self.xp += self.xp + gained_xp 
         if self.xp >= self.xp_treshold:
             self.lvl_up()
+
+    def max_heal(self):
+        self.current_hp = self.max_hp
 
     def __init__(self, name, equipement_slots):
         self.name = name
@@ -103,5 +106,6 @@ class Player():
         self.xp_treshold = 100 + 50 * self.lvl
 
         self.update_stats(equipement_slots)
+        self.max_heal()
 
 

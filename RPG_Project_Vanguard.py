@@ -32,6 +32,15 @@ camp_background = pygame.Surface.convert(pygame.image.load(camp_background_dir))
 slime_plains_background_dir = os.path.join(dirname, fr"Assets\pics\slimeplains.png")
 slime_plains_background = pygame.Surface.convert(pygame.image.load(slime_plains_background_dir))
 
+golem_ruins_background_dir = os.path.join(dirname, fr"Assets\pics\golemruins.png")
+golem_ruins_background = pygame.Surface.convert(pygame.image.load(golem_ruins_background_dir))
+
+wyvern_mountains_background_dir = os.path.join(dirname, fr"Assets\pics\wyvernmountains.png")
+wyvern_mountains_background = pygame.Surface.convert(pygame.image.load(wyvern_mountains_background_dir))
+
+dragon_lair_background_dir = os.path.join(dirname, fr"Assets\pics\dragonlair.png")
+dragon_lair_background = pygame.Surface.convert(pygame.image.load(dragon_lair_background_dir))
+
 player_image_dir = os.path.join(dirname, fr"Assets\pics\tucnak_warm.png")
 player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
 
@@ -63,7 +72,7 @@ chest_cells.update(inventory.inventory_cells)
 chest_cells.update(inventory.chest_cells)
 
 other_chest_buttons = {}
-other_chest_buttons["back to camp"] = gui_objects.Common_back_button(1000, 20)
+other_chest_buttons["back_to_game"] = gui_objects.Common_back_button(1000, 20)
 
 all_chest_butons = {}
 all_chest_butons.update(chest_cells)
@@ -80,12 +89,12 @@ combat_buttons["Flee"] = gui_objects.Common_menu_button(95*3 + (gui_objects.Comm
 ##vars and constants for skill screen
 
 skill_buttons = {}
-skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(400,      25 + 40*10, 1)
-skill_buttons["health_lvl_sub"] = gui_objects.Skill_modify_button(400 + 40, 25 + 40*10, -1)
-skill_buttons["damage_lvl_add"] = gui_objects.Skill_modify_button(400,      25 + 40*11, 1)
-skill_buttons["damage_lvl_sub"] = gui_objects.Skill_modify_button(400 + 40, 25 + 40*11, -1)
-skill_buttons["healing_lvl_add"] = gui_objects.Skill_modify_button(400,      25 + 40*12, 1)
-skill_buttons["healing_lvl_sub"] = gui_objects.Skill_modify_button(400 + 40, 25 + 40*12, -1)
+skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*10, 1)
+skill_buttons["health_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*10, -1)
+skill_buttons["damage_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*11, 1)
+skill_buttons["damage_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*11, -1)
+skill_buttons["healing_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*12, 1)
+skill_buttons["healing_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*12, -1)
 
 other_skill_buttons = {}
 other_skill_buttons["back_to_game"] = gui_objects.Common_back_button(1000, 20)
@@ -138,18 +147,24 @@ golem_wall_hitboxes = []
 
 golem_interactable_hitboxes = {}
 golem_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
+golem_interactable_hitboxes["golem_enemy"] = map_objects.Entity_rect((screen.get_width() - map_objects.Entity_rect.common_width)/2, (screen.get_height() - map_objects.Entity_rect.common_height)/2)
+
 ## wyvern montains
 
 wyvern_wall_hitboxes = []
 
 wyvern_interactable_hitboxes = {}
 wyvern_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
+wyvern_interactable_hitboxes["wyvern_enemy"] = map_objects.Entity_rect((screen.get_width() - map_objects.Entity_rect.common_width)/2, (screen.get_height() - map_objects.Entity_rect.common_height)/2)
+
 ## dragon's lair
 
 dragon_wall_hitboxes = []
 
 dragon_interactable_hitboxes = {}
 dragon_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
+dragon_interactable_hitboxes["dragon_enemy"] = map_objects.Entity_rect((screen.get_width() - map_objects.Entity_rect.common_width)/2, (screen.get_height() - map_objects.Entity_rect.common_height)/2)
+
 
 # player
 BASE_PLAYER_SPEED = 300
@@ -335,14 +350,31 @@ def interact(interacted_with, player_hitbox):
         game_screen = "camp"
         player_hitbox.x, player_hitbox.y = screen.get_width() - 100, 330
         player.update_stats(inventory.equipement_cells)
+        player.max_heal()
     
     if interacted_with == "slime_enemy":
         previous_screen = current_screen
         current_screen = "combat"
         enemy = entities.Slime()
+        enemy.update_stats()    
+    
+    if interacted_with == "golem_enemy":
+        previous_screen = current_screen
+        current_screen = "combat"
+        enemy = entities.Golem()
         enemy.update_stats()
-
-
+    
+    if interacted_with == "wyvern_enemy":
+        previous_screen = current_screen
+        current_screen = "combat"
+        enemy = entities.Wyvern()
+        enemy.update_stats()
+        
+    if interacted_with == "dragon_enemy":
+        previous_screen = current_screen
+        current_screen = "combat"
+        enemy = entities.Dragon()
+        enemy.update_stats()
 
 
 ## main interaction/movement processor
@@ -492,10 +524,9 @@ while running:
             pressed_inventory_button = pressed_button(all_buttons_on_screen)
             if pressed_inventory_button not in active_inventory.keys():
                 previously_clicked_cell = None
-                if pressed_inventory_button == "back to camp":
+                if pressed_inventory_button == "back_to_game":
                     inventory.clear_chest(inventory.chest_cells)
                     back_to_game()
-                    player.update_stats(inventory.equipement_cells)
 
             else:
                 clicked_cell = active_inventory[pressed_inventory_button]
@@ -503,6 +534,7 @@ while running:
                 previously_clicked_cell, clicked_cell = transfare_output[0], transfare_output[1]
                 if transfare_output[2] != None or transfare_output[3] != None:
                     active_inventory[transfare_output[2].name], active_inventory[transfare_output[3].name] = transfare_output[2], transfare_output[3]
+                    player.update_stats(inventory.equipement_cells)
 
 
 
@@ -525,24 +557,21 @@ while running:
             screen.blit(player_image, player_hitbox)
 
         if game_screen == "golem":
-            # screen.blit(golem_plains_background, (0, 0))
-            screen.fill("black")
+            screen.blit(golem_ruins_background, (0, 0))
             render_interactables(golem_interactable_hitboxes)
 
             move(player_hitbox, screen, golem_wall_hitboxes, golem_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
             screen.blit(player_image, player_hitbox)
 
         if game_screen == "wyvern":
-            # screen.blit(wyvern_plains_background, (0, 0))
-            screen.fill("black")
+            screen.blit(wyvern_mountains_background, (0, 0))
             render_interactables(wyvern_interactable_hitboxes)
 
             move(player_hitbox, screen, wyvern_wall_hitboxes, wyvern_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
             screen.blit(player_image, player_hitbox)
         
         if game_screen == "dragon":
-            # screen.blit(dragon_plains_background, (0, 0))
-            screen.fill("black")
+            screen.blit(dragon_lair_background, (0, 0))
             render_interactables(dragon_interactable_hitboxes)
 
             move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
@@ -571,11 +600,12 @@ while running:
                         player = enemy_action_result[1]
 
                         if enemy_action_result[2] == True:
+                            current_screen = "ingame"
                             game_screen = "camp"
                             player.update_stats(inventory.equipement_cells)
+                            player.max_heal()
                             enemy = None
                     else:
-                        game_screen = "camp"
                         current_screen = "inventory"
                         inventory_type = "chest"
                         inventory.assign_drops(inventory.chest_cells, items.generate_drops(enemy))
@@ -590,8 +620,10 @@ while running:
                     player = enemy_action_result[1]
 
                     if enemy_action_result[2] == True:
+                        current_screen = "ingame"
                         game_screen = "camp"
                         player.update_stats(inventory.equipement_cells)
+                        player.max_heal()
                         enemy = None
 
                 case("Flee"):
