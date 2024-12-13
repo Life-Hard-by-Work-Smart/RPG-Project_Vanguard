@@ -36,12 +36,31 @@ wyvern_mountains_background_dir = os.path.join(dirname, fr"Assets\pics\wyvernmou
 dragon_lair_background_dir = os.path.join(dirname, fr"Assets\pics\dragonlair.png")
 player_image_dir = os.path.join(dirname, fr"Assets\pics\tucnak_warm.png")
 
-camp_background = load_asset(camp_background_dir)
-slime_plains_background = load_asset(slime_plains_background_dir)
-golem_ruins_background = load_asset(golem_ruins_background_dir)
-wyvern_mountains_background = load_asset(wyvern_mountains_background_dir)
-dragon_lair_background = load_asset(dragon_lair_background_dir)
-player_image = load_asset(player_image_dir)
+try:
+    camp_background = load_asset(camp_background_dir)
+    print(camp_background)
+except:
+    camp_background = load_asset("defaultbackgroud.png")
+try:
+    slime_plains_background = load_asset(slime_plains_background_dir)
+except:
+    camp_background = load_asset("defaultbackgroud.png")
+try:
+    golem_ruins_background = load_asset(golem_ruins_background_dir)
+except:
+    camp_background = load_asset("defaultbackgroud.png")
+try:
+    wyvern_mountains_background = load_asset(wyvern_mountains_background_dir)
+except:
+    camp_background = load_asset("defaultbackgroud.png")
+try:
+    dragon_lair_background = load_asset(dragon_lair_background_dir)
+except:
+    camp_background = load_asset("defaultbackgroud.png")
+try:
+    player_image = load_asset(player_image_dir)
+except:
+    player_image = pygame.Surface((60, 60))
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # vars and constants for button screens
