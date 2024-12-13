@@ -24,27 +24,24 @@ common_button_font = pygame.font.SysFont("Consolas", 25)
 fight_font = pygame.font.SysFont("Consolas", 35)
 
 # asset loading
+def load_asset(path: str):
+        return pygame.Surface.convert(pygame.image.load(path))
+
 dirname = os.path.dirname(__file__)
 
 camp_background_dir = os.path.join(dirname, fr"Assets\pics\Mapa_RPG-P.V._v1.0.0.png")
-camp_background = pygame.Surface.convert(pygame.image.load(camp_background_dir))
-
 slime_plains_background_dir = os.path.join(dirname, fr"Assets\pics\slimeplains.png")
-slime_plains_background = pygame.Surface.convert(pygame.image.load(slime_plains_background_dir))
-
 golem_ruins_background_dir = os.path.join(dirname, fr"Assets\pics\golemruins.png")
-golem_ruins_background = pygame.Surface.convert(pygame.image.load(golem_ruins_background_dir))
-
 wyvern_mountains_background_dir = os.path.join(dirname, fr"Assets\pics\wyvernmountains.png")
-wyvern_mountains_background = pygame.Surface.convert(pygame.image.load(wyvern_mountains_background_dir))
-
 dragon_lair_background_dir = os.path.join(dirname, fr"Assets\pics\dragonlair.png")
-dragon_lair_background = pygame.Surface.convert(pygame.image.load(dragon_lair_background_dir))
-
 player_image_dir = os.path.join(dirname, fr"Assets\pics\tucnak_warm.png")
-player_image = pygame.Surface.convert(pygame.image.load(player_image_dir))
 
-
+camp_background = load_asset(camp_background_dir)
+slime_plains_background = load_asset(slime_plains_background_dir)
+golem_ruins_background = load_asset(golem_ruins_background_dir)
+wyvern_mountains_background = load_asset(wyvern_mountains_background_dir)
+dragon_lair_background = load_asset(dragon_lair_background_dir)
+player_image = load_asset(player_image_dir)
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # vars and constants for button screens
@@ -170,8 +167,6 @@ dragon_interactable_hitboxes["dragon_enemy"] = map_objects.Entity_rect((screen.g
 BASE_PLAYER_SPEED = 300
 
 player_hitbox = pygame.Rect(screen.get_width()/2, screen.get_height()/2, player_image.get_width(), player_image.get_height())
-player_hitbox_perdiction = player_hitbox.copy()
-
 
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -540,8 +535,8 @@ while running:
 
     if current_screen == "ingame":
         if game_screen == "camp":
-
             screen.blit(camp_background, (0, 0))
+                
             render_walls(camp_wall_hitboxes)
             render_interactables(camp_interactable_hitboxes)
 
@@ -550,6 +545,7 @@ while running:
         
         if game_screen == "slime":
             screen.blit(slime_plains_background, (0, 0))
+            
             render_walls(slime_wall_hitboxes)
             render_interactables(slime_interactable_hitboxes)
 
@@ -558,6 +554,7 @@ while running:
 
         if game_screen == "golem":
             screen.blit(golem_ruins_background, (0, 0))
+                
             render_interactables(golem_interactable_hitboxes)
 
             move(player_hitbox, screen, golem_wall_hitboxes, golem_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
@@ -565,6 +562,7 @@ while running:
 
         if game_screen == "wyvern":
             screen.blit(wyvern_mountains_background, (0, 0))
+            
             render_interactables(wyvern_interactable_hitboxes)
 
             move(player_hitbox, screen, wyvern_wall_hitboxes, wyvern_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
@@ -572,6 +570,7 @@ while running:
         
         if game_screen == "dragon":
             screen.blit(dragon_lair_background, (0, 0))
+                
             render_interactables(dragon_interactable_hitboxes)
 
             move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
