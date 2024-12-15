@@ -694,7 +694,7 @@ while running:
         screen.fill("black")
         render_stats(player, 25, 25)
         render_stats(enemy, 640 + 25, 450)
-
+        print(nth_dialogue_in_row)
         prep_text_output = prep_text_for_dialogue(combat_report_in_pieces[nth_dialogue_in_row], delta_time_sum_from_dialogue_start, CHAR_FREQUENCY)
         text_to_write = prep_text_output[0]
         print(delta_time_sum_from_dialogue_start)
@@ -716,6 +716,7 @@ while running:
                     delta_time_sum_from_dialogue_start = 0
                     nth_dialogue_in_row += 1
                 else:
+                    delta_time_sum_from_dialogue_start = 0
                     if f"{player.name}'s" in combat_report_in_pieces[nth_dialogue_in_row]:
                         current_screen = "inventory"
                         inventory_type = "chest"
