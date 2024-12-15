@@ -1,5 +1,6 @@
 import pygame
 import os
+import time
 import entities
 import gui_objects
 import inventory
@@ -94,7 +95,7 @@ all_chest_butons = {}
 all_chest_butons.update(chest_cells)
 all_chest_butons.update(other_chest_buttons)
 
-## vars and constants for combat
+## combat
 
 
 combat_buttons = {}
@@ -102,7 +103,12 @@ combat_buttons["Attack"] = gui_objects.Common_menu_button(95*1 + (gui_objects.Co
 combat_buttons["Heal"] = gui_objects.Common_menu_button(95*2 + (gui_objects.Common_menu_button.common_width) * 1, screen.get_height() - gui_objects.Common_menu_button.common_height - 50)
 combat_buttons["Flee"] = gui_objects.Common_menu_button(95*3 + (gui_objects.Common_menu_button.common_width) * 2, screen.get_height() - gui_objects.Common_menu_button.common_height - 50)
 
-##vars and constants for skill screen
+
+## dialogue screen
+dialogue_buttons = {}
+dialogue_buttons["a"] = pygame.Rect(0, screen.get_height() - gui_objects.Common_menu_button.common_height - 100, screen.get_width(), 175)
+
+## skill screen
 
 skill_buttons = {}
 skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*10, 1)
@@ -220,11 +226,11 @@ def back_to_game():
 def render_walls(rects: list):
     for rect in rects:
         pygame.draw.rect(screen, "black", rect)
-    
+
 def render_interactables(rects: dict):
     for key, rect in rects.items():
         pygame.draw.rect(screen, "red", [rect.x, rect.y, rect.width, rect.height])
- 
+
 def render_inventory_cells(rects: dict, previously_clicked_cell):
     for rect in rects.values():
         bg_color = "white"
@@ -239,7 +245,7 @@ def render_inventory_cells(rects: dict, previously_clicked_cell):
 def render_skill_buttons(buttons):
     for rect in buttons.values():
         pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
-        if rect.projected_value == 1: operand = "+" 
+        if rect.projected_value == 1: operand = "+"
         else: operand = "-"
         screen.blit(fight_font.render(operand, True, "white", "black", 300), [rect.x, rect.y, rect.width, rect.height])
 
@@ -295,7 +301,7 @@ def dict_colision_detection(player_hitbox, old_x, old_y, temp_x, temp_y, interac
         if colision[1] == True: colisions[1] = True
         if (colisions[0] or colisions[1]) and colided_with == None:
             colided_with = name
-    
+
     return [colisions[0], colisions[1], colided_with]
 
 def colision_management(player_hitbox: pygame.Rect, old_x: int, old_y: int, temp_x: int, temp_y: int, stationary_hitboxes: list, interactable_hitboxes: dict):
@@ -342,19 +348,19 @@ def interact(interacted_with, player_hitbox):
     if interacted_with == "slime_plains_portal":
         game_screen = "slime"
         player_hitbox.x, player_hitbox.y = 50, 330
-    
+
     if interacted_with == "golem_ruins_portal":
         game_screen = "golem"
         player_hitbox.x, player_hitbox.y = 50, 330
-    
+
     if interacted_with == "wyvern_mountains_portal":
         game_screen = "wyvern"
         player_hitbox.x, player_hitbox.y = 50, 330
-    
+
     if interacted_with == "dragon_lair_portal":
         game_screen = "dragon"
         player_hitbox.x, player_hitbox.y = 50, 330
-    
+
     if interacted_with == "skill_merchant":
         previous_screen = current_screen
         current_screen = "skills"
@@ -365,25 +371,25 @@ def interact(interacted_with, player_hitbox):
         player_hitbox.x, player_hitbox.y = screen.get_width() - 100, 330
         player.update_stats(inventory.equipement_cells)
         player.max_heal()
-    
+
     if interacted_with == "slime_enemy":
         previous_screen = current_screen
         current_screen = "combat"
         enemy = entities.Slime()
-        enemy.update_stats()    
-    
+        enemy.update_stats()
+
     if interacted_with == "golem_enemy":
         previous_screen = current_screen
         current_screen = "combat"
         enemy = entities.Golem()
         enemy.update_stats()
-    
+
     if interacted_with == "wyvern_enemy":
         previous_screen = current_screen
         current_screen = "combat"
         enemy = entities.Wyvern()
         enemy.update_stats()
-        
+
     if interacted_with == "dragon_enemy":
         previous_screen = current_screen
         current_screen = "combat"
@@ -417,7 +423,7 @@ def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_spee
 
     new_coords_and_colision = colision_management(player, old_x, old_y, round(tempx), round(tempy), stationary_hitboxes, interactable_hitboxes)
     player_hitbox.x, player_hitbox.y = new_coords_and_colision[0], new_coords_and_colision[1]
-    
+
     interact(new_coords_and_colision[2], player)
 
 ## combat functions
@@ -426,26 +432,64 @@ def move(player, screen, stationary_hitboxes, interactable_hitboxes, player_spee
 def attack(entity_1, entity_2):
     end = False
     entity_2.current_hp = entity_2.current_hp - entity_1.damage_per_hit
+    text = f"{entity_1.name} dealt {entity_1.damage_per_hit} points of damage to {entity_2.name}. "
     if entity_2.current_hp <= 0:
         end = True
-    return (entity_2, end)
+        text += f"{entity_1.name}'s blow was fatal so {entity_2.name} died."
+    return (entity_2, end, text)
 
 
 def heal(entity):
     entity.current_hp = entity.current_hp + entity.healing_amount
-    return entity
+    healed_hp = entity.healing_amount
+    if entity.max_hp < entity.current_hp + entity.healing_amount:
+        healed_hp = entity.max_hp - entity.current_hp
+        entity.current_hp = entity.max_hp
+
+    text = f"{entity.name} healed for {healed_hp} health points. "
+    return (entity, text)
 
 def enemy_action(enemy: entities.Enemy, player: entities.Player):
     end = False
     if enemy.max_hp - enemy.current_hp > enemy.healing_amount and enemy.current_hp/enemy.max_hp <= 1/3:
-        enemy = heal(enemy)
+        heal_result = heal(enemy)
+        enemy = heal_result[0]
+        text = heal_result[1]
     else:
         attack_result = attack(enemy, player)
         player = attack_result[0]
         end = attack_result[1]
-    
-    return(enemy, player, end)
+        text = attack_result[2]
 
+    return(enemy, player, end, text)
+
+## dialogue functions
+
+def split_text_for_dialogue(text):
+    text_list = text.split("." + " ")
+    if text_list[-1] == "":
+        text_list.pop(-1)
+    for i in range(len(text_list)):
+        if not text_list[i].endswith("."):
+            text_list[i] += "."
+    
+    return text_list
+
+def prep_text_for_dialogue(text, delta_time_sum_from_dialogue_start, char_frequency):
+    done = False
+    number_of_chars = round(delta_time_sum_from_dialogue_start * char_frequency)
+    output_text = ""
+    if not number_of_chars > len(text):
+        for i in range(number_of_chars):
+            output_text += text[i]
+    else:
+        done = True
+        output_text = text
+        if round(delta_time_sum_from_dialogue_start * 2) % 2 == 0:
+            output_text += "_"
+        return (output_text, done)
+    output_text += "|"
+    return (output_text, done)
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # setup shits... idk
 
@@ -460,12 +504,14 @@ game_screen = "camp"
 clicked_cell = None
 previously_clicked_cell = None
 
-
-
+# variables and constants for dialogue screen
+combat_report = ""
+combat_report_in_pieces = []
+delta_time_sum_from_dialogue_start = 0
+nth_dialogue_in_row = 0
+CHAR_FREQUENCY = 32
 
 ## code for testing
-
-player.free_skill_points = 2
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # the game
@@ -489,8 +535,8 @@ while running:
             previous_screen = current_screen
             current_screen = "menu"
         print(game_screen, current_screen, previous_screen)
-            
-    
+
+
     if keys_down[pygame.K_e] == True and current_screen != "menu" and current_screen != "skills":
         if current_screen == "inventory" and inventory_type == "backpack":
             back_to_game()
@@ -513,11 +559,11 @@ while running:
 
         pressed_menu_button = None
         if pygame.mouse.get_pressed()[0]:
-            pressed_menu_button = pressed_button(menu_buttons)  
+            pressed_menu_button = pressed_button(menu_buttons)
             if pressed_menu_button == "back to last screen":
                 switch_screens()
-        
-    
+
+
     if current_screen == "inventory":
         screen.fill("black")
         render_inventory_cells(inventory.inventory_cells, previously_clicked_cell)
@@ -527,13 +573,13 @@ while running:
             render_inventory_cells(inventory.equipement_cells, previously_clicked_cell)
             all_buttons_on_screen, active_inventory = backpack_cells, backpack_cells
 
-        
+
         elif inventory_type == "chest":
             render_inventory_cells(inventory.chest_cells, previously_clicked_cell)
             render_buttons(other_chest_buttons)
             all_buttons_on_screen, active_inventory = all_chest_butons, chest_cells
-        
-        
+
+
         if pygame.mouse.get_just_pressed()[0]:
             pressed_inventory_button = pressed_button(all_buttons_on_screen)
             if pressed_inventory_button not in active_inventory.keys():
@@ -555,16 +601,16 @@ while running:
     if current_screen == "ingame":
         if game_screen == "camp":
             screen.blit(camp_background, (0, 0))
-                
+
             render_walls(camp_wall_hitboxes)
             render_interactables(camp_interactable_hitboxes)
 
             move(player_hitbox, screen, camp_wall_hitboxes, camp_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
             screen.blit(player_image, player_hitbox)
-        
+
         if game_screen == "slime":
             screen.blit(slime_plains_background, (0, 0))
-            
+
             render_walls(slime_wall_hitboxes)
             render_interactables(slime_interactable_hitboxes)
 
@@ -573,7 +619,7 @@ while running:
 
         if game_screen == "golem":
             screen.blit(golem_ruins_background, (0, 0))
-                
+
             render_interactables(golem_interactable_hitboxes)
 
             move(player_hitbox, screen, golem_wall_hitboxes, golem_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
@@ -581,15 +627,15 @@ while running:
 
         if game_screen == "wyvern":
             screen.blit(wyvern_mountains_background, (0, 0))
-            
+
             render_interactables(wyvern_interactable_hitboxes)
 
             move(player_hitbox, screen, wyvern_wall_hitboxes, wyvern_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
             screen.blit(player_image, player_hitbox)
-        
+
         if game_screen == "dragon":
             screen.blit(dragon_lair_background, (0, 0))
-                
+
             render_interactables(dragon_interactable_hitboxes)
 
             move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
@@ -598,56 +644,102 @@ while running:
 
     if current_screen == "combat":
         screen.fill("black")
-        
-        render_buttons(combat_buttons)
 
         render_stats(player, 25, 25)
         render_stats(enemy, 640 + 25, 450)
-
+        render_buttons(combat_buttons)
 
         if pygame.mouse.get_just_pressed()[0]:
             pressed_combat_button = pressed_button(combat_buttons)
+            combat_report = ""
+
             match(pressed_combat_button):
                 case("Attack"):
-                    # current_screen = "writing"
                     attack_result = attack(player, enemy)
                     enemy = attack_result[0]
+                    combat_report += attack_result[2]
                     if attack_result[1] == False:
                         enemy_action_result = enemy_action(enemy, player)
                         enemy = enemy_action_result[0]
                         player = enemy_action_result[1]
+                        combat_report += enemy_action_result[3]
 
-                        if enemy_action_result[2] == True:
-                            current_screen = "ingame"
-                            game_screen = "camp"
-                            player.update_stats(inventory.equipement_cells)
-                            player.max_heal()
-                            enemy = None
-                    else:
+                    combat_report_in_pieces = split_text_for_dialogue(combat_report)
+                    previous_screen = current_screen
+                    current_screen = "dialogue"
+                    nth_dialogue_in_row = 0
+
+                case("Heal"):
+                    heal_result = heal(player)
+                    player = heal_result[0]
+                    combat_report += heal_result[1]
+                    enemy_action_result = enemy_action(enemy, player)
+                    enemy = enemy_action_result[0]
+                    player = enemy_action_result[1]
+                    combat_report += enemy_action_result[3]
+
+                    combat_report_in_pieces = split_text_for_dialogue(combat_report)
+                    previous_screen = current_screen
+                    current_screen = "dialogue"
+                    nth_dialogue_in_row = 0
+
+                case("Flee"):
+                    combat_report += f"{player.name} fled from combat."
+                    combat_report_in_pieces = split_text_for_dialogue(combat_report)
+                    previous_screen = current_screen
+                    current_screen = "dialogue"
+                    nth_dialogue_in_row = 0
+
+    if current_screen == "dialogue":
+        screen.fill("black")
+        render_stats(player, 25, 25)
+        render_stats(enemy, 640 + 25, 450)
+
+        prep_text_output = prep_text_for_dialogue(combat_report_in_pieces[nth_dialogue_in_row], delta_time_sum_from_dialogue_start, CHAR_FREQUENCY)
+        text_to_write = prep_text_output[0]
+        print(delta_time_sum_from_dialogue_start)
+        if round(delta_time_sum_from_dialogue_start * CHAR_FREQUENCY) < len(combat_report_in_pieces[nth_dialogue_in_row]) and combat_report_in_pieces[nth_dialogue_in_row][round(delta_time_sum_from_dialogue_start * CHAR_FREQUENCY)] == " ":
+                time.sleep(0.02)
+                delta_time_sum_from_dialogue_start += 0.007
+        else:
+            delta_time_sum_from_dialogue_start += delta_time
+
+        render_text(text_to_write, dialogue_buttons["a"].x, dialogue_buttons["a"].y, dialogue_buttons["a"].width, dialogue_buttons["a"].height)
+
+        if pygame.mouse.get_just_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
+            pressed_dialogue_button = pressed_button(dialogue_buttons)
+            if pressed_dialogue_button == "a":
+
+                if prep_text_output[1] == False: 
+                    delta_time_sum_from_dialogue_start += 20000000000
+                elif nth_dialogue_in_row + 1 < len(combat_report_in_pieces):
+                    delta_time_sum_from_dialogue_start = 0
+                    nth_dialogue_in_row += 1
+                else:
+                    if f"{player.name}'s" in combat_report_in_pieces[nth_dialogue_in_row]:
                         current_screen = "inventory"
                         inventory_type = "chest"
                         inventory.assign_drops(inventory.chest_cells, items.generate_drops(enemy))
                         player.gain_xp(enemy.xp)
                         enemy = None
-                   
-                case("Heal"):
-                    # current_screen = "writing"
-                    player = heal(player)
-                    enemy_action_result = enemy_action(enemy, player)
-                    enemy = enemy_action_result[0]
-                    player = enemy_action_result[1]
-
-                    if enemy_action_result[2] == True:
+                    elif f"{enemy.name}'s" in combat_report_in_pieces[nth_dialogue_in_row]:
                         current_screen = "ingame"
                         game_screen = "camp"
                         player.update_stats(inventory.equipement_cells)
                         player.max_heal()
                         enemy = None
+                    elif f"{player.name} fled" in combat_report_in_pieces[nth_dialogue_in_row]:
+                        previous_screen = current_screen
+                        current_screen = "ingame"
+                        enemy = None
+                    else:
+                        switch_screens()
 
-                case("Flee"):
-                    # current_screen = "writing"
-                    switch_screens()
-                    enemy = None
+
+
+
+
+
 
 
     if current_screen == "skills":
@@ -667,7 +759,7 @@ while running:
         render_text(f"Healing LVL:      {player.healing_lvl}", 25, 25 + 40*12, 400, 40)
 
         # 6 butttonů na modifikaci skillů
-        
+
         render_skill_buttons(skill_buttons)
         render_buttons(other_skill_buttons)
 
@@ -689,13 +781,6 @@ while running:
                     player.healing_lvl += skill_buttons[pressed_skill_button].projected_value
                     player.free_skill_points -= skill_buttons[pressed_skill_button].projected_value
                     player.update_stats(inventory.equipement_cells)
-    
-    
-    
-    
-    # if current_screen == "writing":
-    #     ...
-
 
 
 
