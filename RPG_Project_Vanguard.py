@@ -7,6 +7,7 @@ import inventory
 import gui_objects
 import items
 import map_objects
+import fuse
 
 # pygame setup
 pygame.init()
@@ -36,6 +37,7 @@ golem_ruins_background_dir = os.path.join(dirname, fr"Assets\pics\golemruins.png
 wyvern_mountains_background_dir = os.path.join(dirname, fr"Assets\pics\wyvernmountains.png")
 dragon_lair_background_dir = os.path.join(dirname, fr"Assets\pics\dragonlair.png")
 player_image_dir = os.path.join(dirname, fr"Assets\pics\tucnak_warm.png")
+fuse_items_background_dir = os.path.join(dirname, fr"Assets\pics\slimeplains.png")
 
 try:
     camp_background = load_asset(camp_background_dir)
@@ -62,6 +64,10 @@ try:
     player_image = load_asset(player_image_dir)
 except:
     player_image = pygame.Surface((60, 60))
+try:
+    fuse_items_background = load_asset(slime_plains_background_dir)
+except:
+    camp_background = load_asset("defaultbackgroud.png")
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # vars and constants for button screens
@@ -156,6 +162,8 @@ camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.Portal_rect(1270,
 camp_interactable_hitboxes["wyvern_mountains_portal"] = map_objects.Portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
 camp_interactable_hitboxes["dragon_lair_portal"] = map_objects.Portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wyvern_mountains_portal"].height)
 camp_interactable_hitboxes["skill_merchant"] = pygame.Rect(265, 325, 100, 100)
+camp_interactable_hitboxes["fuse_items_portal"] = pygame.Rect((screen.get_width() + 450) / 2, screen.get_height() - 720, 120, 13)
+
 ## slime plains
 
 slime_wall_hitboxes = []
@@ -186,6 +194,13 @@ dragon_wall_hitboxes = []
 dragon_interactable_hitboxes = {}
 dragon_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
 dragon_interactable_hitboxes["dragon_enemy"] = map_objects.Entity_rect((screen.get_width() - map_objects.Entity_rect.common_width)/2, (screen.get_height() - map_objects.Entity_rect.common_height)/2)
+
+##fuse items
+
+fuse_wall_hitboxes = []
+fuse_interactable_hitboxes = {}
+fuse_interactable_hitboxes["camp_portal"] = map_objects.Portal_rect(0, (screen.get_height() - map_objects.Portal_rect.common_height)/2)
+fuse_interactable_hitboxes["fuse_merchant"] = map_objects.Entity_rect((screen.get_width() - map_objects.Entity_rect.common_width)/2, (screen.get_height() - map_objects.Entity_rect.common_height)/2)
 
 
 # player
@@ -372,6 +387,10 @@ def interact(interacted_with, player_hitbox):
         player.update_stats(inventory.equipement_cells)
         player.max_heal()
 
+    if interacted_with == "fuse_items_portal":
+        game_screen = "fuse"
+        player_hitbox.x, player_hitbox.y = 50, 330
+
     if interacted_with == "slime_enemy":
         previous_screen = current_screen
         current_screen = "combat"
@@ -396,6 +415,10 @@ def interact(interacted_with, player_hitbox):
         enemy = entities.Dragon()
         enemy.update_stats()
 
+    if interacted_with == "fuse_merchant":
+        current_screen = "fuse_screen" 
+        previous_screen = current_screen
+ 
 
 ## main interaction/movement processor
 
@@ -493,7 +516,19 @@ def prep_text_for_dialogue(text, delta_time_sum_from_dialogue_start, char_freque
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # setup shits... idk
 
+def go_to_fuse_screen():
+    global current_screen, previous_screen
+    previous_screen = current_screen
+    current_screen = "fuse_screen"
 
+def back_to_game():
+    global current_screen
+    current_screen = "ingame"
+
+def check_interactions():
+    if current_screen == "ingame":
+        if player_hitbox.colliderect(fuse_interactable_hitboxes["fuse_merchant"]):
+            go_to_fuse_screen()
 
 # variables for game navigation
 current_screen = "ingame"
@@ -525,7 +560,7 @@ while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     keys_pressed = pygame.key.get_pressed()
-    keys_down = pygame.key.get_just_pressed()
+    keys_down = pygame.key.get_pressed()
 
     if keys_down[pygame.K_ESCAPE] == True:
         if current_screen == "menu":
@@ -579,8 +614,17 @@ while running:
             render_buttons(other_chest_buttons)
             all_buttons_on_screen, active_inventory = all_chest_butons, chest_cells
 
+    screen.fill("black") 
+    delta_time = clock.tick(60) / 1000  
 
-        if pygame.mouse.get_just_pressed()[0]:
+
+    if current_screen == "fuse_screen":
+        import fuse
+        fuse.run_fuse_screen(screen, back_to_game)
+
+
+
+        if pygame.mouse.get_pressed()[0]:
             pressed_inventory_button = pressed_button(all_buttons_on_screen)
             if pressed_inventory_button not in active_inventory.keys():
                 previously_clicked_cell = None
@@ -641,7 +685,16 @@ while running:
             move(player_hitbox, screen, dragon_wall_hitboxes, dragon_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
             screen.blit(player_image, player_hitbox)
 
+        if game_screen == "fuse":
+            screen.blit(fuse_items_background, (0, 0))
+                        
+            render_walls(fuse_wall_hitboxes)
+            render_interactables(fuse_interactable_hitboxes)
 
+            move(player_hitbox, screen, fuse_wall_hitboxes, fuse_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
+            screen.blit(player_image, player_hitbox)
+
+    pygame.display.flip()
     if current_screen == "combat":
         screen.fill("black")
 
@@ -649,7 +702,7 @@ while running:
         render_stats(enemy, 640 + 25, 450)
         render_buttons(combat_buttons)
 
-        if pygame.mouse.get_just_pressed()[0]:
+        if pygame.mouse.get_pressed()[0]:
             pressed_combat_button = pressed_button(combat_buttons)
             combat_report = ""
 
@@ -706,7 +759,7 @@ while running:
 
         render_text(text_to_write, dialogue_buttons["a"].x, dialogue_buttons["a"].y, dialogue_buttons["a"].width, dialogue_buttons["a"].height)
 
-        if pygame.mouse.get_just_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
+        if pygame.mouse.get_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
             pressed_dialogue_button = pressed_button(dialogue_buttons)
             if pressed_dialogue_button == "a":
 
@@ -764,7 +817,7 @@ while running:
         render_skill_buttons(skill_buttons)
         render_buttons(other_skill_buttons)
 
-        if pygame.mouse.get_just_pressed()[0]:
+        if pygame.mouse.get_pressed()[0]:
             pressed_skill_button = pressed_button(all_skill_buttons)
             if pressed_skill_button == "back_to_game":
                 switch_screens()
