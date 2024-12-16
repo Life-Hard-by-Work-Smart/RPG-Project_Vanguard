@@ -557,9 +557,6 @@ CHAR_FREQUENCY = 32
 # the game
 
 
-
-
-
 while running:
 
     # poll for events
