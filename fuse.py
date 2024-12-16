@@ -43,7 +43,7 @@ def run_fuse_screen(screen, back_to_game):
         nonlocal fused_item, inventory_full_message
         if all(items) and len(set(item.name for item in items)) == 1:
             fused_item = inventory.upgrade_item(items[0])
-            for cell_name, cell in inventory.inventory_cells.items():
+            for _, cell in inventory.inventory_cells.items():
                 if cell.item is None:
                     cell.item = fused_item
                     fused_item = None
@@ -58,7 +58,7 @@ def run_fuse_screen(screen, back_to_game):
             fused_item = None
 
     def draw_inventory():
-        for cell_name, cell in inventory.inventory_cells.items():
+        for _, cell in inventory.inventory_cells.items():
             pygame.draw.rect(screen, BLACK, (cell.x, cell.y, cell.width, cell.height), 2)
             if cell.item:
                 item_text = INVENTORY_FONT.render(cell.item.name, True, BLACK)
@@ -69,7 +69,7 @@ def run_fuse_screen(screen, back_to_game):
                 screen.blit(message_text, (screen_width // 2 - message_text.get_width() // 2, screen_height // 2 + 200))
 
     def handle_inventory_click(mouse_pos): # zpracuje kliknutí v inventáři -> do fuse slotu
-        for cell_name, cell in inventory.inventory_cells.items():
+        for _, cell in inventory.inventory_cells.items():
             if (
                 cell.x <= mouse_pos[0] <= cell.x + cell.width
                 and cell.y <= mouse_pos[1] <= cell.y + cell.height
@@ -86,7 +86,7 @@ def run_fuse_screen(screen, back_to_game):
             if slot.collidepoint(mouse_pos):
                 if items[i]:
                     
-                    for cell_name, cell in inventory.inventory_cells.items():
+                    for _, cell in inventory.inventory_cells.items():
                         if cell.item is None:
                             cell.item = items[i]  
                             items[i] = None  # dělá opak toho, co ta nahoře
@@ -105,7 +105,7 @@ def run_fuse_screen(screen, back_to_game):
         draw_inventory()
 
         if fused_item:
-            result_text = FONT.render(f"Result: {fused_item.name}", True, BLACK)
+            result_text = FONT.render(f"Výsledek: {fused_item.name}", True, BLACK)
             screen.blit(result_text, ((screen_width - result_text.get_width()) / 2, screen_height / 2 + 150))
 
         pygame.display.flip()
