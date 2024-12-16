@@ -132,6 +132,11 @@ all_skill_buttons.update(skill_buttons)
 all_skill_buttons.update(other_skill_buttons)
 
 
+## fuese screen
+
+fuse_buttons = {}
+# fuse_buttons["back_to_game"] = 
+
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # vars and constants for movement screen
 
@@ -560,7 +565,7 @@ while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     keys_pressed = pygame.key.get_pressed()
-    keys_down = pygame.key.get_pressed()
+    keys_down = pygame.key.get_just_pressed()
 
     if keys_down[pygame.K_ESCAPE] == True:
         if current_screen == "menu":
@@ -593,7 +598,7 @@ while running:
         render_buttons(menu_buttons)
 
         pressed_menu_button = None
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_just_pressed()[0]:
             pressed_menu_button = pressed_button(menu_buttons)
             if pressed_menu_button == "back to last screen":
                 switch_screens()
@@ -606,32 +611,22 @@ while running:
 
         if inventory_type == "backpack":
             render_inventory_cells(inventory.equipement_cells, previously_clicked_cell)
-            all_buttons_on_screen, active_inventory = backpack_cells, backpack_cells
+            all_buttons_on_chest_screen, active_inventory = backpack_cells, backpack_cells
 
 
         elif inventory_type == "chest":
             render_inventory_cells(inventory.chest_cells, previously_clicked_cell)
             render_buttons(other_chest_buttons)
-            all_buttons_on_screen, active_inventory = all_chest_butons, chest_cells
+            all_buttons_on_chest_screen, active_inventory = all_chest_butons, chest_cells
 
-    screen.fill("black") 
-    delta_time = clock.tick(60) / 1000  
+        if pygame.mouse.get_just_pressed()[0]:
+            pressed_inventory_button = pressed_button(all_buttons_on_chest_screen)
 
-
-    if current_screen == "fuse_screen":
-        import fuse
-        fuse.run_fuse_screen(screen, back_to_game)
-
-
-
-        if pygame.mouse.get_pressed()[0]:
-            pressed_inventory_button = pressed_button(all_buttons_on_screen)
             if pressed_inventory_button not in active_inventory.keys():
                 previously_clicked_cell = None
                 if pressed_inventory_button == "back_to_game":
                     inventory.clear_chest(inventory.chest_cells)
                     back_to_game()
-
             else:
                 clicked_cell = active_inventory[pressed_inventory_button]
                 transfare_output = inventory.item_transfare_handler(previously_clicked_cell, clicked_cell, active_inventory)
@@ -639,6 +634,11 @@ while running:
                 if transfare_output[2] != None or transfare_output[3] != None:
                     active_inventory[transfare_output[2].name], active_inventory[transfare_output[3].name] = transfare_output[2], transfare_output[3]
                     player.update_stats(inventory.equipement_cells)
+
+
+
+    if current_screen == "fuse_screen":
+        fuse.run_fuse_screen(screen, back_to_game)
 
 
 
@@ -694,7 +694,6 @@ while running:
             move(player_hitbox, screen, fuse_wall_hitboxes, fuse_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
             screen.blit(player_image, player_hitbox)
 
-    pygame.display.flip()
     if current_screen == "combat":
         screen.fill("black")
 
@@ -702,7 +701,7 @@ while running:
         render_stats(enemy, 640 + 25, 450)
         render_buttons(combat_buttons)
 
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_just_pressed()[0]:
             pressed_combat_button = pressed_button(combat_buttons)
             combat_report = ""
 
@@ -759,7 +758,7 @@ while running:
 
         render_text(text_to_write, dialogue_buttons["a"].x, dialogue_buttons["a"].y, dialogue_buttons["a"].width, dialogue_buttons["a"].height)
 
-        if pygame.mouse.get_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
+        if pygame.mouse.get_just_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
             pressed_dialogue_button = pressed_button(dialogue_buttons)
             if pressed_dialogue_button == "a":
 
@@ -817,7 +816,7 @@ while running:
         render_skill_buttons(skill_buttons)
         render_buttons(other_skill_buttons)
 
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_just_pressed()[0]:
             pressed_skill_button = pressed_button(all_skill_buttons)
             if pressed_skill_button == "back_to_game":
                 switch_screens()
