@@ -155,7 +155,7 @@ camp_wall_hitboxes.append(wall_1)
 wall_2 = pygame.Rect(200, 260, 200, 30)
 camp_wall_hitboxes.append(wall_2)
 
-wall_3 = pygame.Rect(200, 460, 200, 30)
+wall_3 = pygame.Rect(200, 430, 200, 30)
 camp_wall_hitboxes.append(wall_3)
 
 
@@ -166,7 +166,7 @@ camp_interactable_hitboxes["slime_plains_portal"] = map_objects.Portal_rect(1270
 camp_interactable_hitboxes["golem_ruins_portal"] = map_objects.Portal_rect(1270, 2*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height)
 camp_interactable_hitboxes["wyvern_mountains_portal"] = map_objects.Portal_rect(1270, 3*PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height)
 camp_interactable_hitboxes["dragon_lair_portal"] = map_objects.Portal_rect(1270, 4* PORTAL_DISPLACEMENT_Y + camp_interactable_hitboxes["slime_plains_portal"].height + camp_interactable_hitboxes["golem_ruins_portal"].height + camp_interactable_hitboxes["wyvern_mountains_portal"].height)
-camp_interactable_hitboxes["skill_merchant"] = pygame.Rect(265, 325, 100, 100)
+camp_interactable_hitboxes["skill_merchant"] = pygame.Rect(250, 360 - 50, 100, 100)
 camp_interactable_hitboxes["fuse_items_portal"] = pygame.Rect((screen.get_width() + 450) / 2, screen.get_height() - 720, 120, 13)
 
 ## slime plains
@@ -211,7 +211,7 @@ fuse_interactable_hitboxes["fuse_merchant"] = map_objects.Entity_rect((screen.ge
 # player
 BASE_PLAYER_SPEED = 300
 
-player_hitbox = pygame.Rect(screen.get_width()/2, screen.get_height()/2, player_image.get_width(), player_image.get_height())
+player_hitbox = pygame.Rect(screen.get_width()/2 - player_image.get_width()/2, screen.get_height()/2 - player_image.get_height()/2, player_image.get_width(), player_image.get_height())
 
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
