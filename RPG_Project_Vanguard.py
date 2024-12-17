@@ -117,12 +117,12 @@ dialogue_buttons["a"] = pygame.Rect(0, screen.get_height() - gui_objects.Common_
 ## skill screen
 
 skill_buttons = {}
-skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*10, 1)
-skill_buttons["health_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*10, -1)
-skill_buttons["damage_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*11, 1)
-skill_buttons["damage_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*11, -1)
-skill_buttons["healing_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*12, 1)
-skill_buttons["healing_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*12, -1)
+skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 50*10, 1)
+skill_buttons["health_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 50*10, -1)
+skill_buttons["damage_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 50*11, 1)
+skill_buttons["damage_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 50*11, -1)
+skill_buttons["healing_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 50*12, 1)
+skill_buttons["healing_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 50*12, -1)
 
 other_skill_buttons = {}
 other_skill_buttons["back_to_game"] = gui_objects.Common_back_button(1000, 20)
@@ -131,6 +131,11 @@ all_skill_buttons = {}
 all_skill_buttons.update(skill_buttons)
 all_skill_buttons.update(other_skill_buttons)
 
+
+## fuese screen
+
+fuse_buttons = {}
+# fuse_buttons["back_to_game"] = 
 
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # vars and constants for movement screen
@@ -259,7 +264,7 @@ def render_inventory_cells(rects: dict, previously_clicked_cell):
 
 def render_skill_buttons(buttons):
     for rect in buttons.values():
-        pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
+        pygame.draw.rect(screen, "black", [rect.x, rect.y, rect.width, rect.height])
         if rect.projected_value == 1: operand = "+"
         else: operand = "-"
         screen.blit(fight_font.render(operand, True, "white", "black", 300), [rect.x, rect.y, rect.width, rect.height])
@@ -269,7 +274,10 @@ def render_buttons(rects: dict):
         pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
         screen.blit(common_button_font.render(key, True, "black", None, 300), [rect.x, rect.y, rect.width, rect.height])
 
-def render_text(text, x, y, width, height):
+def render_text_medium(text, x, y, width, height):
+    screen.blit(common_button_font.render(text, True, "white", None, width), [x, y, width, height])
+
+def render_text_big(text, x, y, width, height):
     screen.blit(fight_font.render(text, True, "white", None, width), [x, y, width, height])
 
 def render_stats(entity, x, y):
@@ -552,15 +560,12 @@ CHAR_FREQUENCY = 32
 # the game
 
 
-
-
-
 while running:
 
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     keys_pressed = pygame.key.get_pressed()
-    keys_down = pygame.key.get_pressed()
+    keys_down = pygame.key.get_just_pressed()
 
     if keys_down[pygame.K_ESCAPE] == True:
         if current_screen == "menu":
@@ -593,7 +598,7 @@ while running:
         render_buttons(menu_buttons)
 
         pressed_menu_button = None
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_just_pressed()[0]:
             pressed_menu_button = pressed_button(menu_buttons)
             if pressed_menu_button == "back to last screen":
                 switch_screens()
@@ -602,36 +607,33 @@ while running:
     if current_screen == "inventory":
         screen.fill("black")
         render_inventory_cells(inventory.inventory_cells, previously_clicked_cell)
+        render_text_medium(f"Name:    {player.name}", 1000, 160, 400, 40)
+        render_text_medium(f"lvl:     {player.lvl}", 1000, 160 + 50*1, 400, 40)
+        render_text_medium(f"XP:      {player.xp}/{player.xp_treshold}", 1000, 160 + 50*2, 400, 40)
+        render_text_medium(f"Max HP:  {player.max_hp}", 1000, 160 + 50*3, 400, 40)
+        render_text_medium(f"Damage:  {player.damage_per_hit}", 1000, 160 + 50*4, 400, 40)
+        render_text_medium(f"Healing: {player.healing_amount}", 1000, 160 + 50*5, 400, 40)
+        
         pressed_inventory_button = None
 
         if inventory_type == "backpack":
             render_inventory_cells(inventory.equipement_cells, previously_clicked_cell)
-            all_buttons_on_screen, active_inventory = backpack_cells, backpack_cells
+            all_buttons_on_chest_screen, active_inventory = backpack_cells, backpack_cells
 
 
         elif inventory_type == "chest":
             render_inventory_cells(inventory.chest_cells, previously_clicked_cell)
             render_buttons(other_chest_buttons)
-            all_buttons_on_screen, active_inventory = all_chest_butons, chest_cells
+            all_buttons_on_chest_screen, active_inventory = all_chest_butons, chest_cells
 
-    screen.fill("black") 
-    delta_time = clock.tick(60) / 1000  
+        if pygame.mouse.get_just_pressed()[0]:
+            pressed_inventory_button = pressed_button(all_buttons_on_chest_screen)
 
-
-    if current_screen == "fuse_screen":
-        import fuse
-        fuse.run_fuse_screen(screen, back_to_game)
-
-
-
-        if pygame.mouse.get_pressed()[0]:
-            pressed_inventory_button = pressed_button(all_buttons_on_screen)
             if pressed_inventory_button not in active_inventory.keys():
                 previously_clicked_cell = None
                 if pressed_inventory_button == "back_to_game":
                     inventory.clear_chest(inventory.chest_cells)
                     back_to_game()
-
             else:
                 clicked_cell = active_inventory[pressed_inventory_button]
                 transfare_output = inventory.item_transfare_handler(previously_clicked_cell, clicked_cell, active_inventory)
@@ -639,6 +641,11 @@ while running:
                 if transfare_output[2] != None or transfare_output[3] != None:
                     active_inventory[transfare_output[2].name], active_inventory[transfare_output[3].name] = transfare_output[2], transfare_output[3]
                     player.update_stats(inventory.equipement_cells)
+
+
+
+    if current_screen == "fuse_screen":
+        fuse.run_fuse_screen(screen, back_to_game)
 
 
 
@@ -694,7 +701,6 @@ while running:
             move(player_hitbox, screen, fuse_wall_hitboxes, fuse_interactable_hitboxes, BASE_PLAYER_SPEED, delta_time)
             screen.blit(player_image, player_hitbox)
 
-    pygame.display.flip()
     if current_screen == "combat":
         screen.fill("black")
 
@@ -702,7 +708,7 @@ while running:
         render_stats(enemy, 640 + 25, 450)
         render_buttons(combat_buttons)
 
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_just_pressed()[0]:
             pressed_combat_button = pressed_button(combat_buttons)
             combat_report = ""
 
@@ -757,9 +763,9 @@ while running:
         else:
             delta_time_sum_from_dialogue_start += delta_time
 
-        render_text(text_to_write, dialogue_buttons["a"].x, dialogue_buttons["a"].y, dialogue_buttons["a"].width, dialogue_buttons["a"].height)
+        render_text_big(text_to_write, dialogue_buttons["a"].x, dialogue_buttons["a"].y, dialogue_buttons["a"].width, dialogue_buttons["a"].height)
 
-        if pygame.mouse.get_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
+        if pygame.mouse.get_just_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
             pressed_dialogue_button = pressed_button(dialogue_buttons)
             if pressed_dialogue_button == "a":
 
@@ -798,26 +804,26 @@ while running:
 
     if current_screen == "skills":
         screen.fill("black")
-        render_text(f"Name:             {player.name}", 25, 25, 600, 40)
-        render_text(f"lvl:              {player.lvl}", 25, 25 + 40*1, 600, 40)
-        render_text(f"XP:               {player.xp}/{player.xp_treshold}", 25, 25 + 40*2, 600, 40)
-        render_text(f"Max HP:           {player.max_hp}", 25, 25 + 40*3, 600, 40)
-        render_text(f"Damage:           {player.damage_per_hit}", 25, 25 + 40*4, 600, 40)
-        render_text(f"Healing:          {player.healing_amount}", 25, 25 + 40*5, 600, 40)
+        render_text_big(f"Name:             {player.name}", 25, 25, 600, 40)
+        render_text_big(f"lvl:              {player.lvl}", 25, 25 + 50*1, 600, 40)
+        render_text_big(f"XP:               {player.xp}/{player.xp_treshold}", 25, 25 + 50*2, 600, 40)
+        render_text_big(f"Max HP:           {player.max_hp}", 25, 25 + 50*3, 600, 40)
+        render_text_big(f"Damage:           {player.damage_per_hit}", 25, 25 + 50*4, 600, 40)
+        render_text_big(f"Healing:          {player.healing_amount}", 25, 25 + 50*5, 600, 40)
 
-        render_text("------------------------------", 25, 25 + 40*7, 600, 40)
+        render_text_big("------------------------------", 25, 25 + 50*7, 600, 40)
 
-        render_text(f"Free skill point: {player.free_skill_points}", 25, 25 + 40*9, 600, 40)
-        render_text(f"Halth LVL:        {player.health_lvl}", 25, 25 + 40*10, 400, 40)
-        render_text(f"Damage LVL:       {player.damage_lvl}", 25, 25 + 40*11, 400, 40)
-        render_text(f"Healing LVL:      {player.healing_lvl}", 25, 25 + 40*12, 400, 40)
+        render_text_big(f"Free skill point: {player.free_skill_points}", 25, 25 + 50*9, 600, 40)
+        render_text_big(f"Health LVL:       {player.health_lvl}", 25, 25 + 50*10, 400, 40)
+        render_text_big(f"Damage LVL:       {player.damage_lvl}", 25, 25 + 50*11, 400, 40)
+        render_text_big(f"Healing LVL:      {player.healing_lvl}", 25, 25 + 50*12, 400, 40)
 
         # 6 butttonů na modifikaci skillů
 
         render_skill_buttons(skill_buttons)
         render_buttons(other_skill_buttons)
 
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_just_pressed()[0]:
             pressed_skill_button = pressed_button(all_skill_buttons)
             if pressed_skill_button == "back_to_game":
                 switch_screens()

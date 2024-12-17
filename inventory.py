@@ -16,11 +16,17 @@ NUMBER_OF_EQUIPEMENT_CELLS = 4
 NUMBER_OF_CHEST_CELLS = 6
 EQUIPEMENT_CELL_NAMES = ["head", "weapon", "chest", "legs"]
 
+def upgrade_item(item):
+    """Vytvoří nový vylepšený předmět na základě původního."""
+    new_name = f"Upgraded {item.name}"
+    new_damage = item.damage_modifier + 2
+    new_health = item.health_modifier + 5
+    return type(item)(new_name, new_damage, new_health, item.drop_chance * 0.5)
+
 def generate_inventory():
     inventory_cells = {}
     for i in range(NUMBER_OF_CELLS_IN_INV_GRID):
         inventory_cells[str(i)] = Inventory_cell(300 + Inventory_cell.common_widht_and_height * (i%6) + 16 * (i%6), 20 + Inventory_cell.common_widht_and_height * (i//6) + 16 * (i//6), str(i), None)
-        inventory_cells[str(i)].item = None
     return inventory_cells
 
 def generate_equipement_slots():
@@ -51,7 +57,7 @@ def transferable(previously_clicked_cell, clicked_cell):
     elif previously_clicked_cell.name in EQUIPEMENT_CELL_NAMES and clicked_cell in EQUIPEMENT_CELL_NAMES:
         bool_transferable = False
         print("fail, both e")
-    elif previously_clicked_cell.name not in EQUIPEMENT_CELL_NAMES or clicked_cell not in EQUIPEMENT_CELL_NAMES:
+    elif previously_clicked_cell.name not in EQUIPEMENT_CELL_NAMES or clicked_cell.name not in EQUIPEMENT_CELL_NAMES:
         print(clicked_cell.item)
         if clicked_cell.name in EQUIPEMENT_CELL_NAMES and previously_clicked_cell.item.equipement_type != clicked_cell.name:
             print(previously_clicked_cell.item.equipement_type, clicked_cell.name)
@@ -63,7 +69,7 @@ def transferable(previously_clicked_cell, clicked_cell):
     print(bool_transferable)
     return bool_transferable
 
-def item_transfare_handler(previously_clicked_cell: Inventory_cell, clicked_cell: Inventory_cell, cells):
+def item_transfare_handler(previously_clicked_cell: Inventory_cell, clicked_cell: Inventory_cell, cells: dict):
     if previously_clicked_cell != None:
         print("cool, ready for transfare")
         if transferable(previously_clicked_cell, clicked_cell):
