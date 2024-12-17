@@ -117,12 +117,12 @@ dialogue_buttons["a"] = pygame.Rect(0, screen.get_height() - gui_objects.Common_
 ## skill screen
 
 skill_buttons = {}
-skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*10, 1)
-skill_buttons["health_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*10, -1)
-skill_buttons["damage_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*11, 1)
-skill_buttons["damage_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*11, -1)
-skill_buttons["healing_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 40*12, 1)
-skill_buttons["healing_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 40*12, -1)
+skill_buttons["health_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 50*10, 1)
+skill_buttons["health_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 50*10, -1)
+skill_buttons["damage_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 50*11, 1)
+skill_buttons["damage_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 50*11, -1)
+skill_buttons["healing_lvl_add"] = gui_objects.Skill_modify_button(425,      25 + 50*12, 1)
+skill_buttons["healing_lvl_sub"] = gui_objects.Skill_modify_button(425 + 40, 25 + 50*12, -1)
 
 other_skill_buttons = {}
 other_skill_buttons["back_to_game"] = gui_objects.Common_back_button(1000, 20)
@@ -264,7 +264,7 @@ def render_inventory_cells(rects: dict, previously_clicked_cell):
 
 def render_skill_buttons(buttons):
     for rect in buttons.values():
-        pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
+        pygame.draw.rect(screen, "black", [rect.x, rect.y, rect.width, rect.height])
         if rect.projected_value == 1: operand = "+"
         else: operand = "-"
         screen.blit(fight_font.render(operand, True, "white", "black", 300), [rect.x, rect.y, rect.width, rect.height])
@@ -274,7 +274,10 @@ def render_buttons(rects: dict):
         pygame.draw.rect(screen, "white", [rect.x, rect.y, rect.width, rect.height])
         screen.blit(common_button_font.render(key, True, "black", None, 300), [rect.x, rect.y, rect.width, rect.height])
 
-def render_text(text, x, y, width, height):
+def render_text_medium(text, x, y, width, height):
+    screen.blit(common_button_font.render(text, True, "white", None, width), [x, y, width, height])
+
+def render_text_big(text, x, y, width, height):
     screen.blit(fight_font.render(text, True, "white", None, width), [x, y, width, height])
 
 def render_stats(entity, x, y):
@@ -604,6 +607,13 @@ while running:
     if current_screen == "inventory":
         screen.fill("black")
         render_inventory_cells(inventory.inventory_cells, previously_clicked_cell)
+        render_text_medium(f"Name:    {player.name}", 1000, 160, 400, 40)
+        render_text_medium(f"lvl:     {player.lvl}", 1000, 160 + 50*1, 400, 40)
+        render_text_medium(f"XP:      {player.xp}/{player.xp_treshold}", 1000, 160 + 50*2, 400, 40)
+        render_text_medium(f"Max HP:  {player.max_hp}", 1000, 160 + 50*3, 400, 40)
+        render_text_medium(f"Damage:  {player.damage_per_hit}", 1000, 160 + 50*4, 400, 40)
+        render_text_medium(f"Healing: {player.healing_amount}", 1000, 160 + 50*5, 400, 40)
+        
         pressed_inventory_button = None
 
         if inventory_type == "backpack":
@@ -753,7 +763,7 @@ while running:
         else:
             delta_time_sum_from_dialogue_start += delta_time
 
-        render_text(text_to_write, dialogue_buttons["a"].x, dialogue_buttons["a"].y, dialogue_buttons["a"].width, dialogue_buttons["a"].height)
+        render_text_big(text_to_write, dialogue_buttons["a"].x, dialogue_buttons["a"].y, dialogue_buttons["a"].width, dialogue_buttons["a"].height)
 
         if pygame.mouse.get_just_pressed()[0] and delta_time_sum_from_dialogue_start > 0.1:
             pressed_dialogue_button = pressed_button(dialogue_buttons)
@@ -794,19 +804,19 @@ while running:
 
     if current_screen == "skills":
         screen.fill("black")
-        render_text(f"Name:             {player.name}", 25, 25, 600, 40)
-        render_text(f"lvl:              {player.lvl}", 25, 25 + 40*1, 600, 40)
-        render_text(f"XP:               {player.xp}/{player.xp_treshold}", 25, 25 + 40*2, 600, 40)
-        render_text(f"Max HP:           {player.max_hp}", 25, 25 + 40*3, 600, 40)
-        render_text(f"Damage:           {player.damage_per_hit}", 25, 25 + 40*4, 600, 40)
-        render_text(f"Healing:          {player.healing_amount}", 25, 25 + 40*5, 600, 40)
+        render_text_big(f"Name:             {player.name}", 25, 25, 600, 40)
+        render_text_big(f"lvl:              {player.lvl}", 25, 25 + 50*1, 600, 40)
+        render_text_big(f"XP:               {player.xp}/{player.xp_treshold}", 25, 25 + 50*2, 600, 40)
+        render_text_big(f"Max HP:           {player.max_hp}", 25, 25 + 50*3, 600, 40)
+        render_text_big(f"Damage:           {player.damage_per_hit}", 25, 25 + 50*4, 600, 40)
+        render_text_big(f"Healing:          {player.healing_amount}", 25, 25 + 50*5, 600, 40)
 
-        render_text("------------------------------", 25, 25 + 40*7, 600, 40)
+        render_text_big("------------------------------", 25, 25 + 50*7, 600, 40)
 
-        render_text(f"Free skill point: {player.free_skill_points}", 25, 25 + 40*9, 600, 40)
-        render_text(f"Halth LVL:        {player.health_lvl}", 25, 25 + 40*10, 400, 40)
-        render_text(f"Damage LVL:       {player.damage_lvl}", 25, 25 + 40*11, 400, 40)
-        render_text(f"Healing LVL:      {player.healing_lvl}", 25, 25 + 40*12, 400, 40)
+        render_text_big(f"Free skill point: {player.free_skill_points}", 25, 25 + 50*9, 600, 40)
+        render_text_big(f"Health LVL:       {player.health_lvl}", 25, 25 + 50*10, 400, 40)
+        render_text_big(f"Damage LVL:       {player.damage_lvl}", 25, 25 + 50*11, 400, 40)
+        render_text_big(f"Healing LVL:      {player.healing_lvl}", 25, 25 + 50*12, 400, 40)
 
         # 6 butttonů na modifikaci skillů
 
