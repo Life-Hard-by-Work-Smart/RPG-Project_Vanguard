@@ -559,6 +559,7 @@ CHAR_FREQUENCY = 32
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////
 # the game
 
+print("ahoj")
 
 while running:
 
@@ -842,7 +843,7 @@ while running:
                     player.free_skill_points -= skill_buttons[pressed_skill_button].projected_value
                     player.update_stats(inventory.equipement_cells)
 
-
+    
 
     update_screen()
 
