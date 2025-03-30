@@ -475,6 +475,7 @@ def heal(entity):
     healed_hp = entity.healing_amount
     if entity.max_hp < entity.current_hp + entity.healing_amount:
         healed_hp = entity.max_hp - entity.current_hp
+        print(f"entity.max_hp, entity.current_hp")
         entity.current_hp = entity.max_hp
 
     text = f"{entity.name} healed for {healed_hp} health points. "
@@ -753,10 +754,8 @@ while running:
         screen.fill("black")
         render_stats(player, 25, 25)
         render_stats(enemy, 640 + 25, 450)
-        print(nth_dialogue_in_row)
         prep_text_output = prep_text_for_dialogue(combat_report_in_pieces[nth_dialogue_in_row], delta_time_sum_from_dialogue_start, CHAR_FREQUENCY)
         text_to_write = prep_text_output[0]
-        print(delta_time_sum_from_dialogue_start)
         if round(delta_time_sum_from_dialogue_start * CHAR_FREQUENCY) < len(combat_report_in_pieces[nth_dialogue_in_row]) and combat_report_in_pieces[nth_dialogue_in_row][round(delta_time_sum_from_dialogue_start * CHAR_FREQUENCY)] == " ":
                 time.sleep(0.02)
                 delta_time_sum_from_dialogue_start += 0.007
